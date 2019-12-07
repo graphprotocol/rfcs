@@ -2,10 +2,10 @@
 
 ## What is an Engineering Plan?
 
-Engineering Plans are plans to turn an [RFC](./rfcs.md) into an implementation
-in the core Graph Protocol tools like Graph Node, Graph CLI and Graph TS. Every
-substantial development effort that follows an RFC is planned in the form of an
-Engineering Plan.
+Engineering Plans are plans to turn an [RFC](../rfcs/index.md) into an
+implementation in the core Graph Protocol tools like Graph Node, Graph CLI and
+Graph TS. Every substantial development effort that follows an RFC is planned in
+the form of an Engineering Plan.
 
 ## Engineering Plan process
 
@@ -14,7 +14,7 @@ Engineering Plan.
 Like RFCs, Engineering Plans are numbered, starting at `0001`. To create a new
 plan, create a new branch of the `rfcs` repository. Check the existing plans to
 identify the next number to use. Then, copy the [Engineering Plan
-template](./engineering-plans/0000-template.md) to a new file in the
+template](./0000-template.md) to a new file in the
 `engineering-plans/` directory. For example:
 
 ```sh
@@ -31,6 +31,12 @@ reviewed. At the time of writing, every Engineering Plan needs to be approved by
 
 - the Tech Lead, and
 - at least one member of the core development team.
+
+### 3. Engineering Plan approval
+
+Once an Engineering Plan is approved, the Engineering Plan meta data (see the
+[template](./0000-template.md)) is updated and the pull request is merged by the
+original author or a Graph Protocol team member.
 
 ## Approved Engineering Plans
 

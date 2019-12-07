@@ -14,7 +14,7 @@ rejected.
 
 RFCs are numbered, starting at `0001`. To create a new RFC, create a new branch
 of the `rfcs` repository. Check the existing RFCs to identify the next number to
-use. Then, copy the [RFC template](./rfcs/0000-template.md) to a new file in the
+use. Then, copy the [RFC template](./0000-template.md) to a new file in the
 `rfcs/` directory. For example:
 
 ```sh
@@ -35,7 +35,7 @@ the time of writing, every RFC needs to be approved by
 ### 3. RFC approval
 
 Once an RFC is approved, the RFC meta data (see the
-[template](./rfcs/0000-template.md)) is updated and the pull request is merged
+[template](./0000-template.md)) is updated and the pull request is merged
 by the original author or a Graph Protocol team member.
 
 ## Approved RFCs
