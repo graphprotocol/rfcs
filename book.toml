@@ -1,0 +1,6 @@
+[book]
+authors = ["Graph Protocol team"]
+language = "en"
+multilingual = false
+src = "."
+title = "Graph Protocol RFCs and Engineering Plans"
