@@ -19,7 +19,7 @@ template](https://github.com/graphprotocol/rfcs/blob/master/rfcs/0000-template.m
 to a new file in the `rfcs/` directory. For example:
 
 ```sh
-cp templates/rfc.md src/rfcs/015-fulltext-search.md
+cp rfcs/0000-template.md rfcs/0015-fulltext-search.md
 ```
 
 Write the RFC, commit it to the branch and open a [pull

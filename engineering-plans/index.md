@@ -18,7 +18,7 @@ template](https://github.com/graphprotocol/rfcs/blob/master/engineering-plans/00
 to a new file in the `engineering-plans/` directory. For example:
 
 ```sh
-cp templates/engineering-plan.md src/engineering-plans/015-fulltext-search.md
+cp engineering-plans/0000-template.md engineering-plans/0015-fulltext-search.md
 ```
 
 Write the Engineering Plan, commit it to the branch and open a [pull
