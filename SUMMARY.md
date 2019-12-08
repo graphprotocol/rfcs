@@ -1,5 +1,6 @@
 # Summary
 
+- [Introduction](./index.md)
 - [RFCs](./rfcs/index.md)
   - [Approved RFCs](./rfcs/approved.md)
   - [Obsolete RFCs](./rfcs/obsolete.md)
