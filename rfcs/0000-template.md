@@ -3,12 +3,16 @@
 <dl>
   <dt>Author</dt>
   <dd>YOUR FULL NAME</dd>
-  <dt>RFC pull request</dd>
+
+  <dt>RFC pull request</dt>
   <dd><a href="URL">URL</a></dd>
+
   <dt>Date of submission</dt>
   <dd>YYYY-MM-DD</dd>
+
   <dt>Date of approval</dt>
   <dd>YYYY-MM-DD</dd>
+
   <dt>Approved by</dt>
   <dd>First Person, Second Person</dd>
 </dl>
