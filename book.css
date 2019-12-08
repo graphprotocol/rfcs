@@ -1,0 +1,61 @@
+@import url('https://storage.googleapis.com/graph-fonts/EuclidCircular/fonts.css');
+
+:root {
+    --bg: #0c0a1d;
+    --fg: white;
+    --links: #bce8f8;
+    --sidebar-bg: #0c0a1d;
+    --sidebar-active: var(--links);
+    --sidebar-fg: white;
+}
+
+html {
+    background-image: url('https://thegraph.com/blog/img/stars.png');
+    background-color: #0c0a1d;
+}
+
+body {
+    font-family: EuclidCircular, sans-serif;
+    font-weight: 300;
+    line-height: 1.5em;
+}
+
+h1, h2, h3, h4, h5, h6, .header {
+    font-weight: 600;
+    color: var(--fg) !important;
+}
+
+a, a:link, a:visited {
+    transition: all 0.2s ease-in;
+    text-decoration: none !important;
+}
+
+a:hover {
+    text-shadow: 0px 0px 4px #39b6d9, 0px 0px 4px #39b6d9;
+    color: white;
+}
+
+.sidebar a, .sidebar a:link, sidebar a:visited {
+    text-shadow: none;
+}
+
+.sidebar a:hover {
+    text-shadow: 0px 0px 4px #39b6d9, 0px 0px 4px #39b6d9;
+}
+
+.sidebar a.active {
+    text-shadow: 0px 0px 4px #39b6d9, 0px 0px 4px #39b6d9;
+}
+
+.nav-chapters {
+    background-color: inherit !important;
+}
+
+.nav-chapters:hover {
+    color: inherit !important;
+}
+
+:not(pre):not(a) > .hljs, .hljs {
+    background-color: rgba(111,76,255,0.2);
+    color: var(--fg);
+}
