@@ -7,6 +7,9 @@
   <dt>RFC pull request</dt>
   <dd><a href="URL">URL</a></dd>
 
+  <dt>Obsoletes (if applicable)</dt>
+  <dd><a href="./obsolete/0000-template.md">RFC-0000 Template</a></dd>
+
   <dt>Date of submission</dt>
   <dd>YYYY-MM-DD</dd>
 
