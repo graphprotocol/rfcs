@@ -5,7 +5,7 @@
   <dd>YOUR FULL NAME</dd>
 
   <dt>Implements</dt>
-  <dd><a href="./0000-template.md">RFC-0000 Template</a></dd>
+  <dd><a href="../rfcs/0000-template.md">RFC-0000 Template</a></dd>
 
   <dt>Engineering Plan pull request</dt>
   <dd><a href="URL">URL</a></dd>
