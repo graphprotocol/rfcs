@@ -4,3 +4,6 @@ language = "en"
 multilingual = false
 src = "."
 title = "Graph Protocol RFCs and Engineering Plans"
+
+[output.html]
+additional-css = ["custom.css"]
