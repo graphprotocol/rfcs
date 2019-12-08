@@ -5,7 +5,7 @@
   <dd>Jannis Pohlmann</dd>
 
   <dt>RFC pull request</dt>
-  <dd><a href="URL">URL</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/1">https://github.com/graphprotocol/rfcs/pull/1</a></dd>
   
   <dt>Obsoletes</dt>
   <dd>-</dd>
