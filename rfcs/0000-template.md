@@ -15,12 +15,12 @@
 
 ## Summary
 
-A brief summary of the proposal.
+A brief summary of the proposal in 1-3 paragraphs.
 
 ## Motivation
 
 What are the reasons for proposing the change? Why is it needed? What will the
-benefit be?
+benefits be and for whom?
 
 ## Urgency
 
@@ -36,26 +36,25 @@ language and use the same terms when talking about the change.
 ## Detailed Design
 
 This is the main section of the RFC. What does the proposal include? What are
-the proposed interfaces/APIs?
-
-How are different affected parties, such as users, developers or node operators
-affected by the change and how are they going to use it?
+the proposed interfaces/APIs? How are different affected parties, such as users,
+developers or node operators affected by the change and how are they going to
+use it?
 
 ## Compatibility
 
 Is this proposal backwards-compatible or is it a breaking change? If it is
-breaking, how could this be mitigated (think: announcing ahead of time like with
-hard forks, migrations etc.)?
+breaking, how could this be mitigated (think: migrations, announcing ahead of
+time like with hard forks, etc.)?
 
 ## Drawbacks and Risks
 
 Why might we _not_ want to do this? What cost would implementing this proposal
-incur? What risks would be introduced by following the proposed path?
+incur? What risks would be introduced by going down this path?
 
 ## Alternatives
 
-What other designs have been considered, if any? For what reasons where they not
-chosen? Are there workarounds that make this change a _nice to have_?
+What other designs have been considered, if any? For what reasons have they not
+been chosen? Are there workarounds that make this change less necessary?
 
 ## Open Questions
 
