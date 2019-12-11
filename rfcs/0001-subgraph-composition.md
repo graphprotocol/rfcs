@@ -26,7 +26,13 @@
 Subgraph composition enables referencing, extending and querying entities across
 subgraph boundaries.
 
-## Motivation
+## Goals & Motivation
+
+The high-level goal of subgraph composition is to be able to compose subgraph
+schemas and data hierarchically. Imagine umbrella subgraphs that combine all the
+data from a domain (e.g. DeFi, job markets, music) under one unified, coherent
+API. This could allow reuse and governance at different levels and go all the
+way to the top, fulfilling the vision of _the_ Graph.
 
 The ability to reference, extend and query entities across subgraph boundaries
 enables several use cases:
