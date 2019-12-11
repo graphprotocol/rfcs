@@ -180,9 +180,11 @@ subgraph.
 ### Subgraph availability
 
 In the decentralized network, queries will be split and routed through the
-network based on what indexers are available and which subgraphs they index.
-At that point, failure to find an indexer for a subgraph that types were
-imported from will result in a query error.
+network based on what indexers are available and which subgraphs they index. At
+that point, failure to find an indexer for a subgraph that types were imported
+from will result in a query error. The error that a non-nullable field resolved
+to null bubbles up to the next nullable parent, in accordance with the [GraphQL
+Spec](https://graphql.github.io/graphql-spec/draft/#sec-Errors.Error-result-format).
 
 Until the network is reality, we are dealing with individual Graph nodes and
 querying subgraphs where imported entity types are not also indexed on the same
