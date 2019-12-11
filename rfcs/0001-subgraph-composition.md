@@ -234,6 +234,8 @@ implemented in a query-language-agnostic way.
 
 ## Open Questions
 
+- Should it be possible to import interfaces?
+
 - Should it be possible to implement imported interfaces?
 
 - Should it be possible to extend imported interfaces? For example, `Address`
