@@ -61,7 +61,7 @@ _subgraph composition_.
 
 Terms introduced and used in this RFC:
 
-- _Foreign schema_: The schema of another subgraph from which types are
+- _Imported schema_: The schema of another subgraph from which types are
   imported.
 - _Imported type_: An entity type imported from another subgraph schema. 
 - _Extended type_: An entity type imported from another subgraph schema and
@@ -75,7 +75,7 @@ The following sections make the following assumptions:
 
 ### Composing subgraphs by importing types
 
-In order to reference entity types from a foreign schema, a developer would
+In order to reference entity types from a imported schema, a developer would
 first import these entity types from the other subgraph.
 
 Let's say a DAO subgraph contains a `Proposal` type that has a `proposer` field
@@ -109,11 +109,11 @@ transactions, like
 }
 ```
 
-### Extending types from foreign schemas
+### Extending types from imported schemas
 
 Extending types from another subgraph involves a few steps:
 
-1. Importing the foreign entity types.
+1. Importing entity types from the other subgraph.
 2. Extending these entity types with custom fields.
 3. Managing (e.g. creating) extended entities in subgraph mappings.
 
@@ -201,11 +201,11 @@ subgraphs remain valid without any migrations being necessary.
 Reasons that could speak against implementing this feature:
 
 - Schema parsing and validation becomes more complicated. Especially validation
-  of foreign schemas may not always be possible, depending on whether and when
+  of imported schemas may not always be possible, depending on whether and when
   the referenced subgraph is available on the Graph node or not.
 
 - Query execution becomes more complicated. The subgraph a type belongs to must
-  be identified and local and foreign versions of extended entities have to be
+  be identified and local and imported versions of extended entities have to be
   queried separately and be merged.
 
 ## Alternatives
@@ -226,7 +226,7 @@ implemented in a query-language-agnostic way.
 
 ## Open Questions
 
-- An open question is whether it should be possible to extend foreign
+- An open question is whether it should be possible to extend imported
   interfaces. For example, `Address` could be an interface in the
   `ethereum/mainnet` subgraph and `Account` and `Contract` could be concrete
   entity types that both implement the `Address` interface. It would be great if
