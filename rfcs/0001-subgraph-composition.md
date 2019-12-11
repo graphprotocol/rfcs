@@ -234,9 +234,13 @@ implemented in a query-language-agnostic way.
 
 ## Open Questions
 
-- An open question is whether it should be possible to extend imported
-  interfaces. For example, `Address` could be an interface in the
-  `ethereum/mainnet` subgraph and `Account` and `Contract` could be concrete
-  entity types that both implement the `Address` interface. It would be great if
-  the proposals field could be added to this interface and the concrete types as
-  well by importing all three and extending them.
+- Should it be possible to implement imported interfaces?
+
+- Should it be possible to extend imported interfaces? For example, `Address`
+  could be an interface in the `ethereum/mainnet` subgraph and `Account` and
+  `Contract` could be concrete entity types that both implement the `Address`
+  interface. It could be useful if the proposals field could be added to this
+  interface and the concrete types as well by importing all three and extending
+  them.
+  
+- Should it be possible for imported types to implement local interfaces?
