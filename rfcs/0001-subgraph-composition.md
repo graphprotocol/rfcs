@@ -185,10 +185,11 @@ At that point, failure to find an indexer for a subgraph that types were
 imported from will result in a query error.
 
 Until the network is reality, we are dealing with individual Graph nodes and
-querying subgraphs where foreign entities are not also indexed on the same node
-should be handled with more tolerance. This RFC proposes that entity references
-to a subgraph that is not available should simply resolve to `null` values in
-query results.
+querying subgraphs where imported entity types are not also indexed on the same
+node should be handled with more tolerance. This RFC proposes that entity
+reference fields that refer to imported types are converted to being optional in
+the generated API schema. If the subgraph that the type is imported from is not
+available on a node, such fields should resolve to `null`.
 
 ## Compatibility
 
