@@ -146,17 +146,17 @@ extend type Address {
 ```
 
 This makes queries like the following possible, where you can go "back" from
-accounts and contracts to proposal entities, despite the Ethereum `Address` type
-originally being defined in the `ethereum/mainnet` subgraph.
+addresses to proposal entities, despite the Ethereum `Address` type originally
+being defined in the `ethereum/mainnet` subgraph.
 
 ```graphql
 {
-  accounts {
-    address
+  addresses {
+    id
     proposals {
       id
       proposer {
-        address
+        id
     }
   }
 }
