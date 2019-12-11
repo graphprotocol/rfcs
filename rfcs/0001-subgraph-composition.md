@@ -223,7 +223,7 @@ However, schema stitching is being deprecated and Apollo Federation requires a
 centralized server to serve a combined GraphQL API.
 
 Another reason not to use these is that GraphQL will only be _one_ of several
-query languages supported in the future. Composition therefor has to be
+query languages supported in the future. Composition therefore has to be
 implemented in a query-language-agnostic way.
 
 ## Open Questions
