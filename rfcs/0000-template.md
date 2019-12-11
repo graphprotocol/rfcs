@@ -24,7 +24,7 @@
 
 A brief summary of the proposal in 1-3 paragraphs.
 
-## Motivation
+## Goals & Motivation
 
 What are the reasons for proposing the change? Why is it needed? What will the
 benefits be and for whom?
