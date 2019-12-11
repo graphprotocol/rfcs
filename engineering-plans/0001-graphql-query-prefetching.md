@@ -8,7 +8,7 @@
 <dd>No RFC - no user visible changes</dd>
 
 <dt>Engineering Plan pull request</dt>
-<dd><a href="<https://github.com/graphprotocol/rfcs/pull/2>"><https://github.com/graphprotocol/rfcs/pull/2></a></dd>
+<dd><a href="<https://github.com/graphprotocol/rfcs/pull/2>">https://github.com/graphprotocol/rfcs/pull/2</a></dd>
 
 <dt>Date of submission</dt>
 <dd>2019-11-27</dd>
@@ -32,14 +32,16 @@ process GraphQL queries.
 
 For a GraphQL query of the form
 
-    query {
-      parents(filter) {
-        id
-        children(filter) {
-          id
-        }
-      }
+```graphql
+query {
+  parents(filter) {
+    id
+    children(filter) {
+      id
     }
+  }
+}
+```
 
 we want to generate only two SQL queries: one to get the parents, and one
 to get the children for all those parents. The fact that `children` is
@@ -68,13 +70,14 @@ child matches multiple parents, we need to make sure that it is considered
 separately for each parent as it might appear at different ranks for
 different parents. In SQL, we use the `rank()` window function for this:
 
-    select *
-      from (
-        select c.*,
-               rank() over (partition by parent_id order by ...) as pos
-          from (query to get children) c)
-     where pos >= skip and pos < skip + first
-
+```sql
+select *
+  from (
+    select c.*,
+           rank() over (partition by parent_id order by ...) as pos
+      from (query to get children) c)
+ where pos >= skip and pos < skip + first
+```
 
 ### Handling interfaces
 
@@ -95,7 +98,9 @@ That means that when we deal with children that are an interface, we will
 first select only the following columns (where exactly they come from
 depends on how the parent/child relationship is modeled)
 
-    select '{__typename}' as entity, c.vid, c.id, parent_id
+```sql
+select '{__typename}' as entity, c.vid, c.id, parent_id
+```
 
 and form the `union all` of these queries. We then use that union to rank
 children as described above.
@@ -149,9 +154,11 @@ between the different types of joins and queries.
 
 Use when parent is derived and child is a list
 
-    select c.*, parent_id
-     from {children} c join lateral unnest(c.{parent_field}) parent_id
-    where parent_id = any($parent_ids)
+```sql
+select c.*, parent_id
+ from {children} c join lateral unnest(c.{parent_field}) parent_id
+where parent_id = any($parent_ids)
+```
 
 Data needed to generate:
 
@@ -166,9 +173,11 @@ The implementation uses a `EntityLink::Direct` for joins of this type.
 
 Use when parent is derived and child is not a list
 
-    select c.*, c.{parent_field} as parent_id
-     from {children} c
-    where c.{parent_field} = any($parent_ids)
+```sql
+select c.*, c.{parent_field} as parent_id
+ from {children} c
+where c.{parent_field} = any($parent_ids)
+```
 
 Data needed to generate:
 
@@ -183,10 +192,12 @@ The implementation uses a `EntityLink::Direct` for joins of this type.
 
 Use when parent is a list and not derived
 
-    select c.*, p.id as parent_id
-     from {children} c, {parents} p
-    where p.id = any($parent_ids)
-      and c.id = any(p.{child_field})
+```sql
+select c.*, p.id as parent_id
+ from {children} c, {parents} p
+where p.id = any($parent_ids)
+  and c.id = any(p.{child_field})
+```
 
 Data needed to generate:
 
@@ -202,10 +213,12 @@ The implementation uses a `EntityLink::Parent` for joins of this type.
 
 Use when parent is not a list and not derived
 
-    select c.*, p.id as parent_id
-     from {children} c, {parents} p
-    where p.id = any($parent_ids)
-      and c.id = p.child_field
+```sql
+select c.*, p.id as parent_id
+ from {children} c, {parents} p
+where p.id = any($parent_ids)
+  and c.id = p.child_field
+```
 
 Data needed to generate:
 
@@ -245,26 +258,28 @@ they return.
 In the most general case, we have an `EntityCollection::Window` with
 multiple windows. The query for that case is
 
-    with matches as (
-      -- Limit the matches for each parent
-      select c.*
+```sql
+with matches as (
+  -- Limit the matches for each parent
+  select c.*
+    from (
+      -- Rank matching children for each parent
+      select c.*,
+             rank() over (partition by c.parent_id order by {query.order}) as pos
         from (
-          -- Rank matching children for each parent
-          select c.*,
-                 rank() over (partition by c.parent_id order by {query.order}) as pos
-            from (
-              {window.children_uniform(sort_key, block)}
-              union all
-                ... range ober all windows) c) c
-       where c.pos > {skip} and c.pos <= {skip} + {first})
-    -- Get the full entity for each match
-    select m.entity, to_jsonb(c.*) as data, m.parent_id, m.pos
-      from matches m, {window.child_table()} c
-     where c.vid = m.vid and m.entity = '{window.child_type}'
-     union all
-           ... range over all windows
-     -- Make sure we return the children for each parent in the correct order
-     order by parent_id, pos
+          {window.children_uniform(sort_key, block)}
+          union all
+            ... range ober all windows) c) c
+   where c.pos > {skip} and c.pos <= {skip} + {first})
+-- Get the full entity for each match
+select m.entity, to_jsonb(c.*) as data, m.parent_id, m.pos
+  from matches m, {window.child_table()} c
+ where c.vid = m.vid and m.entity = '{window.child_type}'
+ union all
+       ... range over all windows
+ -- Make sure we return the children for each parent in the correct order
+ order by parent_id, pos
+```
 
 When there is only one window, we can simplify the above query. The
 simplification basically inlines the `matches` CTE. That is important as
@@ -273,45 +288,49 @@ they are only used once. We therefore reduce the two queries that Postgres
 executes above to one for the fairly common case that the children are not
 an interface.
 
-    select '{window.child_type}' as entity, to_jsonb(c.*) as data
-      from (
-        -- Rank matching children
-        select c.*,
-              rank() over (partition by c.parent_id order by {query.order}) as pos
-         from ({window.children_detailed()}) c) c
-     where c.pos >= {window.skip} and c.pos <= {window.skip} + {window.first}
-     order by c.parent_id,c.pos
-
+```sql
+select '{window.child_type}' as entity, to_jsonb(c.*) as data
+  from (
+    -- Rank matching children
+    select c.*,
+          rank() over (partition by c.parent_id order by {query.order}) as pos
+     from ({window.children_detailed()}) c) c
+ where c.pos >= {window.skip} and c.pos <= {window.skip} + {window.first}
+ order by c.parent_id,c.pos
+```
 When we do not have to window, but only deal with an
 `EntityCollection::All` with multiple entity types, we can simplify the
 query by avoiding ranking and just using an ordinary `order by` clause:
 
-    with matches as (
-      -- Get uniform info for all matching children
-      select '{entity_type}' as entity, id, vid, {sort_key}
-        from {entity_table} c
-       where {query_filter}
-       union all
-         ... range over all entity types
-       order by {sort_key} offset {query.skip} limit {query.first})
-    -- Get the full entity for each match
-    select m.entity, to_jsonb(c.*) as data, c.id, c.{sort_key}
-      from matches m, {entity_table} c
-     where c.vid = m.vid and m.entity = '{entity_type}'
-     union all
-           ... range over all entity types
-     -- Make sure we return the children for each parent in the correct order
+```sql
+with matches as (
+  -- Get uniform info for all matching children
+  select '{entity_type}' as entity, id, vid, {sort_key}
+    from {entity_table} c
+   where {query_filter}
+   union all
+     ... range over all entity types
+   order by {sort_key} offset {query.skip} limit {query.first})
+-- Get the full entity for each match
+select m.entity, to_jsonb(c.*) as data, c.id, c.{sort_key}
+  from matches m, {entity_table} c
+ where c.vid = m.vid and m.entity = '{entity_type}'
+ union all
+       ... range over all entity types
+ -- Make sure we return the children for each parent in the correct order
      order by c.{sort_key}, c.id
+```
 
 And finally, for the very common case of a GraphQL query without nested
 children that uses a concrete type, not an interface, we can further
 simplify this, again by essentially inlining the `matches` CTE to:
 
-    select '{entity_type}' as entity, to_jsonb(c.*) as data
-      from {entity_table} c
-     where query.filter()
-     order by {query.order} offset {query.skip} limit {query.first}
-
+```sql
+select '{entity_type}' as entity, to_jsonb(c.*) as data
+  from {entity_table} c
+ where query.filter()
+ order by {query.order} offset {query.skip} limit {query.first}
+```
 
 ## Boring list of possible GraphQL models
 
@@ -324,74 +343,76 @@ that any interfaces involved in this query have already been reolved into
 their implementations and we are dealing with one pair of concrete
 parent/child types.
 
-    # Case 1
-    type Parent {
-      children: [Child] @derived
-    }
-    
-    type Child {
-      parents: [Parent]
-    }
-    
-    # Case 2
-    type Parent {
-      child: Child @derived
-    }
-    
-    type Child {
-      parents: [Parent]
-    }
-    
-    # Case 3
-    type Parent {
-      children: [Child] @derived
-    }
-    
-    type Child {
-      parent: Parent
-    }
-    
-    # Case 4
-    type Parent {
-      child: Child @derived
-    }
-    
-    type Child {
-      parent: Parent
-    }
-    
-    # Case 5
-    type Parent {
-      children: [Child]
-    }
-    
-    type Child {
-      # doesn't matter
-    }
-    
-    # Case 6
-    type Parent {
-      children: [Child]
-    }
-    
-    type Child {
-      # doesn't matter
-    }
-    
-    # Case 7
-    type Parent {
-      child: Child
-    }
-    
-    type Child {
-      # doesn't matter
-    }
-    
-    # Case 8
-    type Parent {
-      child: Child
-    }
-    
-    type Child {
-      # doesn't matter
-    }
+```graphql
+# Case 1
+type Parent {
+  children: [Child] @derived
+}
+
+type Child {
+  parents: [Parent]
+}
+
+# Case 2
+type Parent {
+  child: Child @derived
+}
+
+type Child {
+  parents: [Parent]
+}
+
+# Case 3
+type Parent {
+  children: [Child] @derived
+}
+
+type Child {
+  parent: Parent
+}
+
+# Case 4
+type Parent {
+  child: Child @derived
+}
+
+type Child {
+  parent: Parent
+}
+
+# Case 5
+type Parent {
+  children: [Child]
+}
+
+type Child {
+  # doesn't matter
+}
+
+# Case 6
+type Parent {
+  children: [Child]
+}
+
+type Child {
+  # doesn't matter
+}
+
+# Case 7
+type Parent {
+  child: Child
+}
+
+type Child {
+  # doesn't matter
+}
+
+# Case 8
+type Parent {
+  child: Child
+}
+
+type Child {
+  # doesn't matter
+}
+```
