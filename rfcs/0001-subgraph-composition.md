@@ -1,4 +1,4 @@
-# RFC-0001: Subgraph composition
+# RFC-0001: Subgraph Composition
 
 <dl>
   <dt>Author</dt>
