@@ -43,8 +43,39 @@ There are two important parts to schema merging:
 
 ### Schema Merging
 
-Add a `merged_schema(Document, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported 
+Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported 
 types to the proviced document with a @subgraphId diretive denoting which subgraph the type came from. The `api_schema` function will add all the necessary types and fields for the imported types without any changes.
+
+Schema before calling `merged_schema`:
+
+```graphql
+type _Schema_
+	@import(
+		types: ["B"],
+		from: { id: "..." }
+	)
+
+type A @entity {
+	id: ID!
+	foo: B!
+}
+```
+
+Schema after calling `merged_schema`
+
+```graphql
+type A @entity @subgraphId("...") {
+	id: ID!
+	foo: B!
+}
+
+type B @entity @subgraphId("...") {
+	id: ID!
+	bar: String
+}
+```
+
+After the schema document is merged, the `api_schema` will be called.
 
 ### Cache Invalidation
 
@@ -77,11 +108,11 @@ Documenation on https://thegraph.com/docs needs to outline:
 
 ## Implementation Plan
 
-- Implment the `merged_schema` function (2d)
+- Impelment the `merged_schema` function (2d)
 - Write tests for the `merged_schema` function (1d)
 - Integrate `merged_schema` into `Store::cached_schema` and update the cache to include the relevant information for imported schemas and types (1d)
 - Add cache invalidation logic to `Store::cached_schema` (2d)
 
 ## Open Questions
 
-The details of how queries and subscriptions needs to be updated to leverage the types in a merged schema.
+The execution of queries and subscriptions needs to be updated to leverage the types in a merged schema.
