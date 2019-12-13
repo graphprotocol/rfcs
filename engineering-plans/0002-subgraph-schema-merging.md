@@ -8,7 +8,7 @@
   <dd><a href="../rfcs/0001-subgraph-composition.md">RFC-0001 Subgraph Composition</a></dd>
 
   <dt>Engineering Plan pull request</dt>
-  <dd><a href="https://github.com/graphprotocol/rfcs/pull/1">Design PR</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/5">Engineering Plan PR</a></dd>
 
   <dt>Obsoletes (if applicable)</dt>
 
