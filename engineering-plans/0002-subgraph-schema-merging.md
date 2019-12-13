@@ -77,26 +77,6 @@ Documenation on https://thegraph.com/docs needs to outline:
 
 ## Implementation Plan
 
-An iterative plan for implementing the change or new feature.
-
-Think hard to not skip over potential challenges. Break the implementation down
-into a step-by-step plan where the scope of every step is clear and where there
-is no, or little, uncertainty about each individual step and the sequence
-overall.
-
-**Estimates:** Every step/task must come with an estimate of 1, 2, 3, 4 or 5
-days.
-
-**Phases:** For big changes, it can make sense to break down the overall plan
-into implementation phases.
-
-**Integration:** Explicit integration points must be included in the plan. What
-are we going to submit for review and integration at what point? What can be
-integrated early?
-
-In order for a plan to be approved, there must be _extremely high_ confidence
-that the plan will work out.
-
 - Implment the `merged_schema` function (2d)
 - Write tests for the `merged_schema` function (1d)
 - Integrate `merged_schema` into `Store::cached_schema` and update the cache to include the relevant information for imported schemas and types (1d)
