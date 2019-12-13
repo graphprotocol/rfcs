@@ -100,7 +100,7 @@ that the plan will work out.
 - Implment the `merged_schema` function (2d)
 - Write tests for the `merged_schema` function (1d)
 - Integrate `merged_schema` into `Store::cached_schema` and update the cache to include the relevant information for imported schemas and types (1d)
-- Add cache invalidation log to `Store::cached_schema` (2d)
+- Add cache invalidation logic to `Store::cached_schema` (2d)
 
 ## Open Questions
 
