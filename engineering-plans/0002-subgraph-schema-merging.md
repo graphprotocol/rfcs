@@ -75,7 +75,7 @@ type B @entity @subgraphId("...") {
 }
 ```
 
-After the schema document is merged, the `api_schema` will be called.
+After the schema document is merged, the `api_schema` function will be called.
 
 ### Cache Invalidation
 
