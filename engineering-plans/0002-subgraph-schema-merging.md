@@ -43,11 +43,17 @@ The schema merging implementation consists of two parts:
 
 ### Schema Merging
 
-Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported types to the provided document with a @subgraphId diretive denoting which subgraph the type came from. 
-If the type is imported with the `{ name: "", as: "" }` format, the merged type will include an `@originalName("...")` directive.
-The `api_schema` function will add all the necessary types and fields for the imported types without any changes.
+Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported types to the provided document with a @subgraphId diretive denoting which subgraph the type came from.
 
-#### Example #1: Valid import and complete merge
+The `HashMap<SchemaReference, Arc<Schema>` includes all of the schemas in the subgraph's import graph which are available on the Graph Node. For each `@import` directive on the subgraph, find the imported types by tracing their path along the import graph.
+
+- If any schema node along that path is missing or if the type is missing in the schema, add a type definition to the subgraphs merged schema with the proper name, a `@subgraphId("...")` directive (if available), and a `@placeholder` directive denoting that type was not found. 
+- If the type is found, copy it and add a `@subgraphId("...")` directive.
+- If the type is imported with the `{ name: "", as: "" }` format, the merged type will include an `@originalName("...")` directive preserving the type name from the original schema.
+
+The `api_schema` function will add all the necessary types and fields for the imported types without requiring any changes.
+
+#### Example #1: Complete merge
 
 Local schema before calling `merged_schema`:
 
@@ -87,7 +93,7 @@ type B @entity @subgraphId("X") {
 }
 ```
 
-#### Example #2
+#### Example #2: Incomplete merge
 
 Schema before calling `merged_schema`:
 
@@ -104,6 +110,12 @@ type A @entity {
 }
 ```
 
+Imported Schema X:
+
+```graphql
+NOT AVAILABLE
+```
+
 Schema after calling `merged_schema`
 
 ```graphql
@@ -112,13 +124,12 @@ type A @entity @subgraphId("...") {
   foo: B!
 }
 
-type B @entity @subgraphId("...") {
+type B @entity @placeholder {
   id: ID!
-  bar: String
 }
 ```
 
-#### Example #3
+#### Example #3: Complete merge with `{ name: "...", as: "..." }`
 
 Schema before calling `merged_schema`
 
@@ -191,7 +202,7 @@ Documentation on https://thegraph.com/docs needs to outline:
 
 ## Implementation Plan
 
-- Impelment the `merged_schema` function (2d)
+- Implement the `merged_schema` function (2d)
 - Write tests for the `merged_schema` function (1d)
 - Integrate `merged_schema` into `Store::cached_schema` and update the cache to include the relevant information for imported schemas and types (1d)
 - Add cache invalidation logic to `Store::cached_schema` (2d)
