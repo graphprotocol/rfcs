@@ -1,4 +1,4 @@
-# PLAN-0001: Subgraph Schema Merging for Subgraph Composition
+# PLAN-0002: Subgraph Schema Merging
 
 <dl>
   <dt>Author</dt>
@@ -46,13 +46,55 @@ There are two important parts to schema merging:
 Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported 
 types to the proviced document with a @subgraphId diretive denoting which subgraph the type came from. The `api_schema` function will add all the necessary types and fields for the imported types without any changes.
 
+#### Example #1: Valid import and complete merge
+
+Local schema before calling `merged_schema`:
+
+```graphql
+type _Schema_
+	@import(
+		types: ["B"],
+		from: { id: "X" }
+	)
+
+type A @entity {
+	id: ID!
+	foo: B!
+}
+```
+
+Imported Schema X:
+
+```graphql
+type B @entity {
+	id: ID!
+	bar: String
+}
+```
+
+Schema after calling `merged_schema`:
+
+```graphql
+type A @entity {
+	id: ID!
+	foo: B!
+}
+
+type B @entity @subgraphId("X") {
+	id: ID!
+	bar: String
+}
+```
+
+#### Example #2
+
 Schema before calling `merged_schema`:
 
 ```graphql
 type _Schema_
 	@import(
 		types: ["B"],
-		from: { id: "..." }
+		from: { id: "X" }
 	)
 
 type A @entity {
@@ -79,9 +121,9 @@ After the schema document is merged, the `api_schema` function will be called.
 
 ### Cache Invalidation
 
-In the initial implementation, the cache will need to check if an entry needs to be updated when it is accessed. To determine whether an entry in the schema cache has been invalidated, each subgraph schema it imports by name needs to be queried in the store for its most current version. The schema cache will maintain a record of the versions used for merging in each entry, and if the version previously used to merge is no longer current that entry needs to be invalidated an remerged before responding to the cache access.
+In the initial implementation, the cache will need to check if an entry needs to be updated when it is accessed. To determine whether an entry in the schema cache has been invalidated, each subgraph schema it imports by name needs to be queried in the store for its most current version. The schema cache will maintain a record of the versions used for merging in each entry, and if the version previously used to merge is no longer current that entry needs to be invalidated and remerged before responding to the cache access.
 
-A more performant invalidation solution would be to have the cache maintain a listener notifying it every time a subgraph's current version changes. Upon receiving the notification it would scan the schemas in the cache for those which need to be remerged.
+A more performant invalidation solution would be to have the cache maintain a listener notifying it every time a subgraph's current version changes. Upon receiving the notification the listener scans the schemas in the cache for those which should be remerged.
 
 
 ## Tests
