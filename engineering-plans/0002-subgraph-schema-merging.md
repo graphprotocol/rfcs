@@ -11,6 +11,7 @@
   <dd><a href="https://github.com/graphprotocol/rfcs/pull/5">Engineering Plan PR</a></dd>
 
   <dt>Obsoletes (if applicable)</dt>
+  <dd>-</dd>
 
   <dt>Date of submission</dt>
   <dd>2019-12-09</dd>
