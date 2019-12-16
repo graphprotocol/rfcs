@@ -43,8 +43,9 @@ The schema merging implementation consists of two parts:
 
 ### Schema Merging
 
-Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported 
-types to the proviced document with a @subgraphId diretive denoting which subgraph the type came from. The `api_schema` function will add all the necessary types and fields for the imported types without any changes.
+Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported types to the provided document with a @subgraphId diretive denoting which subgraph the type came from. 
+If the type is imported with the `{ name: "", as: "" }` format, the merged type will include an `@originalName("...")` directive.
+The `api_schema` function will add all the necessary types and fields for the imported types without any changes.
 
 #### Example #1: Valid import and complete merge
 
@@ -151,7 +152,7 @@ type B @entity {
   foo: BB!
 }
 
-type BB @entity @subgraphId("X") @mergeInfo(originalName: "B") {
+type BB @entity @subgraphId("X") @originalName("B") {
   id: ID!
   bar: String
 }
