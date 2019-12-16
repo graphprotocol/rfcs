@@ -25,22 +25,21 @@
 
 ## Summary
 
-Subgraph composition allows a subgraph to import types from a foreign subgraph. Imports are designed to be loosely coupled throughout the deployment and indexing phases, and tightly coupled during query execution for the subgraph.
+Subgraph composition allows a subgraph to import types from another subgraph. Imports are designed to be loosely coupled throughout the deployment and indexing phases, and tightly coupled during query execution for the subgraph.
 
-To generate an API schema for the subgraph, the local schema needs to be merged with each of the foreign schemas that it imports. The merging process needs to take the following into account:
+To generate an API schema for the subgraph, the subgraph schema needs to be merged with the imported subgraph schemas. The merging process needs to take the following into account:
 
-1. An imported schema not being available on the graph-node
-2. An imported schema without a definition for the type which the local subgraph imports
-3. A merged and cached api schema for a subgraph imported by name is updated
+1. An imported schema not being available on the Graph Node
+2. An imported schema mising a type imported by the subgraph schema
+3. A schema imported by subgraph name changes
 4. Ability to tell which subgraph/schema each type belongs to
 
 ## Implementation
 
-There are two important parts to schema merging:
+The schema merging implementation consists of two parts:
 
-1. Merging the schema
-
-2. Invalidating a cache entry when a subgraph's dependency, referenced by name, is updated and remerging that schema
+1. A cache of subgraph schemas
+2. The schema merging logic
 
 ### Schema Merging
 
@@ -53,14 +52,14 @@ Local schema before calling `merged_schema`:
 
 ```graphql
 type _Schema_
-	@import(
-		types: ["B"],
-		from: { id: "X" }
-	)
+  @import(
+    types: ["B"],
+    from: { id: "X" }
+  )
 
 type A @entity {
-	id: ID!
-	foo: B!
+  id: ID!
+  foo: B!
 }
 ```
 
@@ -68,8 +67,8 @@ Imported Schema X:
 
 ```graphql
 type B @entity {
-	id: ID!
-	bar: String
+  id: ID!
+  bar: String
 }
 ```
 
@@ -77,13 +76,13 @@ Schema after calling `merged_schema`:
 
 ```graphql
 type A @entity {
-	id: ID!
-	foo: B!
+  id: ID!
+  foo: B!
 }
 
 type B @entity @subgraphId("X") {
-	id: ID!
-	bar: String
+  id: ID!
+  bar: String
 }
 ```
 
@@ -93,14 +92,14 @@ Schema before calling `merged_schema`:
 
 ```graphql
 type _Schema_
-	@import(
-		types: ["B"],
-		from: { id: "X" }
-	)
+  @import(
+    types: ["B"],
+    from: { id: "X" }
+  )
 
 type A @entity {
-	id: ID!
-	foo: B!
+  id: ID!
+  foo: B!
 }
 ```
 
@@ -108,13 +107,53 @@ Schema after calling `merged_schema`
 
 ```graphql
 type A @entity @subgraphId("...") {
-	id: ID!
-	foo: B!
+  id: ID!
+  foo: B!
 }
 
 type B @entity @subgraphId("...") {
-	id: ID!
-	bar: String
+  id: ID!
+  bar: String
+}
+```
+
+#### Example #3
+
+Schema before calling `merged_schema`
+
+```graphql
+type _Schema_
+  @imports(
+    types: [{ name: "B", as: "BB" }]
+    from: { id: "X" }
+  )
+
+type B @entity {
+  id: ID!
+  foo: BB!
+}
+```
+
+Imported Schema X:
+
+```graphql
+type B @entity {
+  id: ID!
+  bar: String
+}
+```
+
+Schema after calling `merged_schema`
+
+```graphql
+type B @entity {
+  id: ID!
+  foo: BB!
+}
+
+type BB @entity @subgraphId("X") @mergeInfo(originalName: "B") {
+  id: ID!
+  bar: String
 }
 ```
 
@@ -129,25 +168,25 @@ A more performant invalidation solution would be to have the cache maintain a li
 
 ## Tests
 
-1. Schemas are merged correctly when all schemas and imported types are available
+1. Schemas are merged correctly when all schemas and imported types are available.
 
-2. Placeholder types are properly inserted into the merged schema when a schema is not available
+2. Placeholder types are properly inserted into the merged schema when a schema is not available.
 
-3. Placeholder types are properly inserted into the merged schema when the relevant schemas are available but the types are not
+3. Placeholder types are properly inserted into the merged schema when the relevant schemas are available but the types are not.
 
-4. The cache is invalidated when the store returns an updated version of a cache entry's dependency
+4. The cache is invalidated when the store returns an updated version of a cache entry's dependency.
 
 ## Migration
 
-Subgraph composition is an additive feature which shouldn't require a special migration plan.
+Subgraph composition is an additive feature which doesn't require a special migration plan.
 
 ## Documentation
 
-Documenation on https://thegraph.com/docs needs to outline:
+Documentation on https://thegraph.com/docs needs to outline:
 
-1. The reserved _Schema_ type and how to define imports on it
-2. The semantics of importing by subgraph id vs. subgraph name, i.e. what happens when a subgraph imported by name removes expected types from the schema
-3. How queries are processed when imported subgraphs schemas or types are not available on the graph-node processing the query
+1. The reserved _Schema_ type and how to define imports on it.
+2. The semantics of importing by subgraph ID vs. subgraph name, i.e. what happens when a subgraph imported by name removes expected types from the schema.
+3. How queries are processed when imported subgraphs schemas or types are not available on the graph-node processing the query.
 
 ## Implementation Plan
 
@@ -158,4 +197,4 @@ Documenation on https://thegraph.com/docs needs to outline:
 
 ## Open Questions
 
-The execution of queries and subscriptions needs to be updated to leverage the types in a merged schema.
+- The execution of queries and subscriptions needs to be updated to leverage the types in a merged schema.
