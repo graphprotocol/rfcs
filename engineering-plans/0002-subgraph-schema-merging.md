@@ -173,9 +173,9 @@ After the schema document is merged, the `api_schema` function will be called.
 
 ### Cache Invalidation
 
-For each schema in the cache, keep a vector of volatile schemas containing an element for each schema in the subgraph's import graph which was imported by name and the subgraph_id which was used during the schema merge. When a schema is accessed from the schema cache (and possibly only if this check hasn't happened in the last N seconds), check the current version for each of these schemas and run a diff against the versions used for the most recentschema merge. If there are any new versions, re merge the schema.
+For each schema in the cache, keep a vector of subgraph pointers containing an element for each schema in the subgraph's import graph which was imported by name and the subgraph_id which was used during the schema merge. When a schema is accessed from the schema cache (and possibly only if this check hasn't happened in the last N seconds), check the current version for each of these schemas and run a diff against the versions used for the most recent schema merge. If there are any new versions, re merge the schema.
 
-Currently the `schema_cache` in the `Store` is a `Mutex<LruCache<SubgraphDeploymentId, SchemaPair>>`. A `SchemaPair` consists of two fields: `input_schema` and `api_schema`. To support the refresh flow, `SchemaPair` would be extended to be a `SchemaEntry`, with the fields `input_schema`, `api_schema`, and a `schemas_imported_by_name` (`Vec<(SubgraphDeploymentName, SubgraphDeploymentId)>`)
+Currently the `schema_cache` in the `Store` is a `Mutex<LruCache<SubgraphDeploymentId, SchemaPair>>`. A `SchemaPair` consists of two fields: `input_schema` and `api_schema`. To support the refresh flow, `SchemaPair` would be extended to be a `SchemaEntry`, with the fields `input_schema`, `api_schema`, `schemas_imported_by_name` (`Vec<(SubgraphDeploymentName, SubgraphDeploymentId)>`), and a `last_refresh_check` timestamp.
 
 A more performant invalidation solution would be to have the cache maintain a listener notifying it every time a subgraph's current version changes. Upon receiving the notification the listener scans the schemas in the cache for those which should be remerged.
 
