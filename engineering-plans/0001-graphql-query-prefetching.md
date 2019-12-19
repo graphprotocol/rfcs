@@ -24,6 +24,10 @@ This is not really a plan as it was written and discussed before we adopted
 the RFC process, but contains important implementation detail of how we
 process GraphQL queries.
 
+## Contents
+
+<!-- toc -->
+
 
 ## Implementation Details for prefetch queries
 

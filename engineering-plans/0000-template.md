@@ -23,6 +23,10 @@
   <dd>First Person, Second Person</dd>
 </dl>
 
+## Contents
+
+<!-- toc -->
+
 ## Summary
 
 A description of what the Engineering Plan does in 1-2 paragraphs.

@@ -6,4 +6,13 @@ src = "."
 title = "Graph Protocol RFCs and Engineering Plans"
 
 [output.html]
-additional-css = ["custom.css"]
+additional-css = ["assets/custom.css", "assets/mermaid.css"]
+additional-js = ["assets/mermaid.min.js", "assets/mermaid-init.js"]
+
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+renderer = ["html"]

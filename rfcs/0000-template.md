@@ -20,6 +20,10 @@
   <dd>First Person, Second Person</dd>
 </dl>
 
+## Contents
+
+<!-- toc -->
+
 ## Summary
 
 A brief summary of the proposal in 1-3 paragraphs.
