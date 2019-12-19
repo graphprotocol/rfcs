@@ -10,3 +10,7 @@ dl {
 dt {
     font-weight: 600;
 }
+
+.section, ol.section {
+    opacity: 1.0;
+}
