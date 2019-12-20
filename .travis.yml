@@ -1,27 +1,25 @@
 language: rust
 sudo: false
-
 cache:
-  - cargo
-
+- cargo
 rust:
-  - stable
-
+- stable
 before_script:
-  - (test -x $HOME/.cargo/bin/cargo-install-update || cargo install cargo-update)
-  - (test -x $HOME/.cargo/bin/mdbook || cargo install mdbook)
-  - (test -x $HOME/.cargo/bin/mdbook-toc || cargo install mdbook-toc)
-  - (test -x $HOME/.cargo/bin/mdbook-mermaid || cargo install mdbook-mermaid)
-  - cargo install-update -a
-
+- "(test -x $HOME/.cargo/bin/cargo-install-update || cargo install cargo-update)"
+- "(test -x $HOME/.cargo/bin/mdbook || cargo install mdbook)"
+- "(test -x $HOME/.cargo/bin/mdbook-toc || cargo install mdbook-toc)"
+- "(test -x $HOME/.cargo/bin/mdbook-mermaid || cargo install mdbook-mermaid)"
+- cargo install-update -a
 script:
-  - mdbook build
-
+- mdbook build
 deploy:
   provider: pages
   skip_cleanup: true
-  github_token: $GITHUB_TOKEN
+  github_token: "$GITHUB_TOKEN"
   local_dir: book
   keep_history: false
   on:
     branch: master
+env:
+  global:
+    secure: HanvmD0vHEeboyM2caID6QmYRvFY0cOuXGslDxOwX95QPCW+hvJQpVuK1RPu+YI1jU5g42bgYZ5fRuZ+acU0vkE3WW9gzpSaEN19SxShaEMFX+JTvqAbL0JEqD59vVm7B1yr8trKd+JysTKniGNZ/eb/Z1sEnai8C7tVxuygJSg6pAy/Pz5c7Q9Peo38Duhks9nL+LziEt/nFhglAsxeEsq6aWtPmBvcCtwLfqYIirrsEjllMbEng6rwGAo5m2rzUSIrDijbKfbT/qcX3XwpX5BYRHTapyB0QMluPOqTohEm4oy6b4zTqyiyWA2aTBRMCryxrPN0BmTZHh6mtXr4fGk2WopCahL4gwX9/ftYUQv2X95C5Gp5kYYDA/v2AhQL96EOIsYch15gGdXivrNZXOimhAhR5DLo9kpR7f7nClGniSdwJzcAEVhhfPwNfoiKFQtL+IPskAr9K5QSIOz2MMoEF/fSqC/kMtm3tUUaU0V3umpfi3/lRptgKf04+dk3DesriWue7yp2f19/uUUUqRR4lYbfSHO6kqfordSYEM1u0T39+e4FdfZAn4jp8RJaMW6oEBsV62NHA2QkCjodtt0J4ZbUS1DIgyZrvW8pWxzPwIsomjxaJXZlkTAnVgVEc4KZaFYmO4Ob7NF0JsdINKYJEHsFeZ7wIXJh/+R1ftI=
