@@ -1,4 +1,4 @@
-# PLAN-0001: Remove JSONB Storage
+# PLAN-0003: Remove JSONB Storage
 
 <dl>
   <dt>Author</dt>
