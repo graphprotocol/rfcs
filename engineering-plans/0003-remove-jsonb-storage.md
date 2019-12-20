@@ -11,17 +11,13 @@
   <dd><a href="https://github.com/graphprotocol/rfcs/pull/7">https://github.com/graphprotocol/rfcs/pull/7</a></dd>
 
   <dt>Date of submission</dt>
-  <dd>YYYY-MM-DD</dd>
+  <dd>2019-12-18</dd>
 
   <dt>Date of approval</dt>
-  <dd>YYYY-MM-DD</dd>
-
-  <dt>Approval needed</dt>
-  <dd>Yaniv/Jess/Eva on general approach and help with notifying users</dd>
-  <dd>Core devs on migration strategy</dd>
+  <dd>2019-12-20</dd>
 
   <dt>Approved by</dt>
-  <dd>First Person, Second Person</dd>
+  <dd>Jess Ngo, Jannis Pohlmann</dd>
 </dl>
 
 ## Summary
