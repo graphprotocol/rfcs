@@ -43,13 +43,13 @@ The schema merging implementation consists of two parts:
 
 ### Schema Merging
 
-Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported types to the provided document with a @subgraphId diretive denoting which subgraph the type came from.
+Add a `merged_schema(&Schema, HashMap<SchemaReference, Arc<Schema>) -> Schema` function to the `graphql::schema` crate which will add each of the imported types to the provided document with a `@subgraphId` directive denoting which subgraph the type came from. If any of the imported types have non scalar fields, import those types as well.
 
 The `HashMap<SchemaReference, Arc<Schema>` includes all of the schemas in the subgraph's import graph which are available on the Graph Node. For each `@import` directive on the subgraph, find the imported types by tracing their path along the import graph.
 
-- If any schema node along that path is missing or if the type is missing in the schema, add a type definition to the subgraphs merged schema with the proper name, a `@subgraphId("...")` directive (if available), and a `@placeholder` directive denoting that type was not found. 
-- If the type is found, copy it and add a `@subgraphId("...")` directive.
-- If the type is imported with the `{ name: "", as: "" }` format, the merged type will include an `@originalName("...")` directive preserving the type name from the original schema.
+- If any schema node along that path is missing or if a type is missing in the schema, add a type definition to the subgraphs merged schema with the proper name, a `@subgraphId(id: "...")` directive (if available), and a `@placeholder` directive denoting that type was not found.
+sc- If the type is found, copy it and add a `@subgraphId(id: "...")` directive.
+- If the type is imported with the `{ name: "", as: "" }` format, the merged type will include an `@originalName(name: "...")` directive preserving the type name from the original schema.
 
 The `api_schema` function will add all the necessary types and fields for the imported types without requiring any changes.
 
@@ -87,7 +87,7 @@ type A @entity {
   foo: B!
 }
 
-type B @entity @subgraphId("X") {
+type B @entity @subgraphId(id: "X") {
   id: ID!
   bar: String
 }
@@ -119,7 +119,7 @@ NOT AVAILABLE
 Schema after calling `merged_schema`
 
 ```graphql
-type A @entity @subgraphId("...") {
+type A @entity @subgraphId(id: "...") {
   id: ID!
   foo: B!
 }
@@ -163,19 +163,89 @@ type B @entity {
   foo: BB!
 }
 
-type BB @entity @subgraphId("X") @originalName("B") {
+type BB @entity @subgraphId(id: "X") @originalName(name: "B") {
   id: ID!
   bar: String
 }
 ```
 
+#### Example #4: Complete merge with nested types
+
+Schema before calling `merged_schema`
+
+```graphql
+type _Schema_
+  @imports(
+    types: [{ name: "B", as: "BB" }]
+    from: { id: "X" }
+  )
+
+type B @entity {
+  id: ID!
+  foo: BB!
+}
+```
+
+Imported Schema X:
+
+```graphql
+type _Schema_
+  @imports(
+	types: [{ name: "C", as: "CC" }]
+	from: { id: "Y" }
+  )
+
+type B @entity {
+  id: ID!
+  bar: CC!
+  baz: DD!
+}
+
+type DD @entity {
+  id: ID!
+}
+```
+
+Imported Schema Y:
+
+```graphql
+type C @entity {
+	id: ID!
+}
+```
+
+Schema after calling `merged_schema`
+
+```graphql
+type B @entity {
+  id: ID!
+  foo: BB!
+}
+
+type BB @entity @subgraphId(id: "X") @originalName(name: "B") {
+  id: ID!
+  bar: CC!
+  baz: DD!
+}
+
+type CC @entity @subgraphId(id: "Y") @originalName(name: "C") {
+  id: ID!
+}
+
+type DD @entity @subgraphId(id: "X") {
+  id: ID!
+}
+```
+
+
+
 After the schema document is merged, the `api_schema` function will be called.
 
 ### Cache Invalidation
 
-For each schema in the cache, keep a vector of subgraph pointers containing an element for each schema in the subgraph's import graph which was imported by name and the subgraph_id which was used during the schema merge. When a schema is accessed from the schema cache (and possibly only if this check hasn't happened in the last N seconds), check the current version for each of these schemas and run a diff against the versions used for the most recent schema merge. If there are any new versions, re merge the schema.
+For each schema in the cache, keep a vector of subgraph pointers containing an element for each schema in the subgraph's import graph which was imported by name and the subgraph ID which was used during the schema merge. When a schema is accessed from the schema cache (and possibly only if this check hasn't happened in the last N seconds), check the current version for each of these schemas and run a diff against the versions used for the most recent schema merge. If there are any new versions, re merge the schema.
 
-Currently the `schema_cache` in the `Store` is a `Mutex<LruCache<SubgraphDeploymentId, SchemaPair>>`. A `SchemaPair` consists of two fields: `input_schema` and `api_schema`. To support the refresh flow, `SchemaPair` would be extended to be a `SchemaEntry`, with the fields `input_schema`, `api_schema`, `schemas_imported_by_name` (`Vec<(SubgraphDeploymentName, SubgraphDeploymentId)>`), and a `last_refresh_check` timestamp.
+Currently the `schema_cache` in the `Store` is a `Mutex<LruCache<SubgraphDeploymentId, SchemaPair>>`. A `SchemaPair` consists of two fields: `input_schema` and `api_schema`. To support the refresh flow, `SchemaPair` would be extended to be a `SchemaEntry`, with the fields `input_schema`, `api_schema`, `schemas_imported` (`Vec<(SchemaReference, SubgraphDeploymentId)>`), and a `last_refresh_check` timestamp.
 
 A more performant invalidation solution would be to have the cache maintain a listener notifying it every time a subgraph's current version changes. Upon receiving the notification the listener scans the schemas in the cache for those which should be remerged.
 
