@@ -3,6 +3,7 @@
 - [Introduction](./index.md)
 - [RFCs](./rfcs/index.md)
   - [Approved RFCs](./rfcs/approved.md)
+    - [RFC-0002: Ethereum Tracing Cache](./rfcs/0002-ethereum-tracing-cache.md)
   - [Obsolete RFCs](./rfcs/obsolete.md)
   - [Rejected RFCs](./rfcs/rejected.md)
 - [Engineering Plans](./engineering-plans/index.md)

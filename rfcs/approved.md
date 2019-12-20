@@ -1,3 +1,3 @@
 # Approved RFCs
 
-- No RFCs have been approved yet.
+- [RFC-0002: Ethereum Tracing Cache](./0002-ethereum-tracing-cache.md)
