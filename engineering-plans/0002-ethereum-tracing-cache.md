@@ -8,7 +8,7 @@
   <dd><a href="../rfcs/0002-ethereum-tracing-cache.md">RFC-0002 Ethereum Tracing Cache</a></dd>
 
   <dt>Engineering Plan pull request</dt>
-  <dd><a href="URL">URL</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/9">https://github.com/graphprotocol/rfcs/pull/9</a></dd>
 
   <dt>Obsoletes (if applicable)</dt>
   <dd>None</dd>
@@ -96,18 +96,18 @@ None, aside from code comments
 
 ## Implementation Plan
 - [ ] Create benchmarks
-- [ ] Refactor existing `EtheriumCallCache` into `ServiceCache` trait
+- [ ] Refactor existing `EthereumCallCache` into `ServiceCache` trait
 - [ ] Use `ServiceCache` trait for traces
 - [ ] Run benchmarks
 - [ ] Migrate/delete old database schema
 
 
 **Estimates:**
-(1) Create benchmarks
-(2) Refactor existing `EtheriumCallCache` into `ServiceCache` trait
-(1) Use `ServiceCache` trait for traces
-(0.5) Run benchmarks
-(0.5) Migrate/delete old database schema
+- (1) Create benchmarks
+- (2) Refactor existing `EthereumCallCache` - into `ServiceCache` trait
+- (1) Use `ServiceCache` trait for traces
+- (0.5) Run benchmarks
+- (0.5) Migrate/delete old database schema
 
 Total: 5
 
