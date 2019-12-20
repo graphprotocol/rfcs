@@ -22,11 +22,11 @@
 
 ## Summary
 
-This RFC proposes the creation of a local ethereum tracing cache to speed up indexing of subgraphs which use block and/or call handlers.
+This RFC proposes the creation of a local Ethereum tracing cache to speed up indexing of subgraphs which use block and/or call handlers.
 
 ## Motivation
 
-When indexing a subgraph that uses block and/or call handlers, it is necessary to extract calls from the trace of each block that a Graph Node indexes. It is expensive to acquire and process traces from ethereum nodes in both money and time.
+When indexing a subgraph that uses block and/or call handlers, it is necessary to extract calls from the trace of each block that a Graph Node indexes. It is expensive to acquire and process traces from Ethereum nodes in both money and time.
 
 When developing a subgraph it is common to make changes and deploy those changes to a production Graph Node for testing. Each time a change is deployed, the Graph Node must re-sync the subgraph using the same traces that were used for the previous sync of the subgraph. The cost of acquiring the traces each time a change is deployed impacts a subgraph developer's ability to iterate and test quickly.
 
@@ -36,7 +36,7 @@ None
 
 ## Terminology
 
-Ethereum cache: The new API proposed here.
+_Ethereum cache_: The new API proposed here.
 
 ## Detailed Design
 
