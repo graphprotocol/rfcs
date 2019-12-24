@@ -276,3 +276,7 @@ The existing alternative that protocol developers are creating for dApp develope
   We've been operating under this assumption while developing the prototype. We have since scrapped this requirement as it has proven nearly impossible to successfully transpile our own source, along with all our dependencies, into a single monolithic module. If anyone has experience doing this I would love chat!
 - **How should the dApp configure the resolvers module?**  
   The dApp knows best how to: connect to the various web3 networks, handle key signature requests, and all other user / dApp specific things. We need a way for the dApp to configure the resolvers in a specific way given the resolver's requirements (IPFS provider, Web3 provider, etc).
+- **What paradigm should the resolver state follow?**  
+  One option is to have the resolver's call into a single interface that modifys the backing data. Whenever this data is modified, the entirety of it is passed to the dApp. The downside here is that the dApp doesn't know what has changed within the data, and is forced to represent it in its entirety in order to not miss anything.  
+
+  Another option is to implement something similar to Redux, where the resolvers fire off events with corresponding payloads of data. These events map to reducers, which take in this payload of data and decide what to do with it. The dApp could implement these reducers, and choose how it would want to react to the various events.
