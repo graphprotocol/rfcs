@@ -37,10 +37,10 @@ From a developer experience point of view I see this as urgent because it elimin
 
 ## Terminology
 
-_Mutation_: GraphQL Mutation.
-_Resolver_: Resolver function that's mapped to a mutation.
-_Resolver State_: The resolver function's state (transactions sent, data logged, etc).
-_Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.
+_Mutation_: GraphQL Mutation.  
+_Resolver_: Resolver function that's mapped to a mutation.  
+_Resolver State_: The resolver function's state (transactions sent, data logged, etc).  
+_Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
 
 ## Detailed Design
 
