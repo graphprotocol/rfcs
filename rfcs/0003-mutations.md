@@ -168,7 +168,8 @@ export default {
 ```javascript
 const {
   createMutations,
-  createMutationsLink
+  createMutationsLink,
+  useMutation
 } = require("@graphprotocol/mutations-ts")
 const myMutations = require("mutations-js-module")
 
@@ -220,7 +221,8 @@ const CREATE_ENTITY = gql`
   }
 `
 
-const [exec] = useMutation(
+// state === resolver's state
+const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
     client,
@@ -230,9 +232,8 @@ const [exec] = useMutation(
   }
 )
 
-// Or alternatively, we can subscribe to resolver
-// state updates, and also utilize an optimistic response
-const [exec, { loading, state }] = useMutationAndSubscribe(
+// We can also utilize an optimistic response
+const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
     optimisticResponse: {
@@ -253,9 +254,6 @@ const [exec, { loading, state }] = useMutationAndSubscribe(
     }
   }
 )
-
-// loading === boolean
-// state === resolver's state
 ```
 
 ## Compatibility
