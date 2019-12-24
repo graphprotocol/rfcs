@@ -37,35 +37,242 @@ From a developer experience point of view I see this as urgent because it elimin
 
 ## Terminology
 
-_Mutation_: GraphQL Mutation.  
-_Resolver_: Resolver function that's mapped to a mutation.  
-_Resolver State_: The resolver function's state (transactions sent, data logged, etc).  
-_Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
+* _Mutation_: GraphQL Mutation.  
+* _Resolver_: Resolver function that's mapped to a mutation.  
+* _Resolver State_: The resolver function's state (transactions sent, data logged, etc).  
+* _Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
 
 ## Detailed Design
 
-This is the main section of the RFC. What does the proposal include? What are the proposed interfaces/APIs? How are different affected parties, such as users, developers or node operators affected by the change and how are they going to use it?
+### Mutation Manifest
 
-TODO: design the developer flow, below it have a detailed spec of each aspect.
+`subgraph.yaml`
+```yaml
+specVersion: ...
+...
+mutations:
+  specVersion: 0.0.1
+  repository: https://npmjs.com/package/...
+  schema:
+    file: ./mutations/schema.graphql
+  resolvers:
+    kind: javascript
+    file: ./mutations/index.js
+dataSources: ...
+...
+```
+
+Alternatively, you can store the mutations manifest externally like so:  
+`subgraph.yaml`
+```yaml
+specVersion: ...
+...
+mutations:
+  file: ./mutations/mutations.yaml
+dataSources: ...
+...
+```
+`mutations/mutations.yaml`
+```yaml
+specVersion: 0.0.1
+repository: https://npmjs.com/package/...
+schema:
+  file: ./schema.graphql
+resolvers:
+  kind: javascript
+  file: ./index.js
+```
+
+### Mutation Schema
+`schema.graphql`
+```graphql
+type MyEntity @entity {
+  id: ID!
+  name: String!
+  value: BigInt!
+}
+```
+
+`mutations/schema.graphql`
+```graphql
+input MyEntityOptions {
+  name: String!
+  value: BigInt!
+}
+
+type Mutation {
+  createEntity(
+    options: MyEntityOptions!
+  ): MyEntity!
+
+  setEnityName(
+    entity: MyEntity!
+    name: String!
+  ): MyEntity!
+}
+```
+**NOTE:** GraphQL types from the subgraph's schema.graphql are automatically included in this file.
+
+### Mutation Resolvers
+`mutations/index.js`
+```javascript
+const resolvers = {
+  Mutation: {
+    async createEntity (_, args, context) {
+      // Extract mutation arguments
+      const { name, value } = args.options
+
+      // Use configuration properties created by the
+      // config generator functions below
+      const { ethereum, ipfs } = context.graph.config
+
+      // Fetch datasource addresses & abis
+      const { MyContract } = context.graph.datasources
+      await MyContract.abi
+      await MyContract.address
+
+      // Modify a state object, which relays updates back
+      // to the subscribed dApp
+      const { mutationState } = context.graph
+      mutationState.addTransaction("tx_hash")
+
+      ...
+    },
+    async setEntityName (_, args, context) {
+      ...
+    }
+  }
+}
+
+// Configuration Setters
+const config = {
+  // These function arguments are passed in by the dApp
+  ethereum (provider) {
+    return new ethers.providers.Web3Provider(provider)
+  },
+  ipfs (provider) {
+    return new IPFS(provider)
+  },
+  customProperty (value) {
+    return value + 2
+  }
+}
+
+export default {
+  resolvers,
+  config
+}
+```
+
+### dApp Integration
+```javascript
+const {
+  createMutations,
+  createMutationsLink
+} = require("@graphprotocol/mutations-ts")
+const myMutations = require("mutations-js-module")
+
+const mutations = createMutations({
+  mutations: myMutations,
+  subgraph: "my-subgraph",
+  node: "http://localhost:8080",
+  // Configuration Getters
+  config: {
+    ethereum: async () => {
+      const { ethereum } = (window as any)
+      await ethereum.enable()
+      return ethereum
+    },
+    ipfs: "http://localhost:5001",
+    customProperty: 5
+  }
+})
+
+// Create an Apollo Links
+const mutationLink = createMutationLink({ mutations })
+const queryLink = createHttpLink({
+  uri: "http://localhost:5001/subgraphs/name/my-subgraph"
+})
+
+const link = split(
+  ({ query }) => {
+    const node = getMainDefinition(query);
+    return node.kind === "OperationDefinition" &&
+           node.operation === "mutation"
+  },
+  mutationLink,
+  queryLink
+);
+
+// Create Apollo Client
+const client = new ApolloClient({
+  link,
+  cache: new InMemoryCache()
+})
+
+const CREATE_ENTITY = gql`
+  mutation createEntity($options: MyEntityOptions) {
+    createEntity(options: $options) {
+      id
+      name
+      value
+    }
+  }
+`
+
+const [exec] = useMutation(
+  CREATE_ENTITY,
+  {
+    client,
+    variables: {
+      options: { name: "...", value: 5 }
+    }
+  }
+)
+
+// Or alternatively, we can subscribe to resolver
+// state updates, and also utilize an optimistic response
+const [exec, { loading, state }] = useMutationAndSubscribe(
+  CREATE_ENTITY,
+  {
+    optimisticResponse: {
+      myEntity: {
+        id: "...",
+        name: "...",
+        value: 5,
+      }
+    },
+    update(proxy, { data }) {
+      // result = data.myEntity
+    },
+    onError(error) {
+      ...
+    },
+    variables: {
+      options: { name: "...", value: 5 }
+    }
+  }
+)
+
+// loading === boolean
+// state === resolver's state
+```
 
 ## Compatibility
 
-Is this proposal backwards-compatible or is it a breaking change? If it is breaking, how could this be mitigated (think: migrations, announcing ahead of time like with hard forks, etc.)?
-
-TODO: no breaking changes will be introduced. This is an optional add-on to existing and new subgraphs.
+No breaking changes will be introduced, as mutations are an optional add-on to a subgraph.
 
 ## Drawbacks and Risks
 
-Why might we _not_ want to do this? What cost would implementing this proposal incur? What risks would be introduced by going down this path?
-
-TODO: compat issues (ES5)
+I have some thoughts but they are rather verbose and tangential. Would love some feedback on this from others first.
 
 ## Alternatives
 
-What other designs have been considered, if any? For what reasons have they not been chosen? Are there workarounds that make this change less necessary?
-
-TODO: talk about existing alternatives, and how they're ineffecient.
+The existing alternative that protocol developers are creating for dApp developers has been described above.
 
 ## Open Questions
 
-What are unresolved questions?
+- **Should the resolvers module be ES5 compliant?**  
+  We've been operating under this assumption while developing the prototype. We have since scrapped this requirement as it has proven nearly impossible to successfully transpile our own source, along with all our dependencies, into a single monolithic module. If anyone has experience doing this I would love chat!
+- **How should the dApp configure the resolvers module?**  
+  The dApp knows best how to: connect to the various web3 networks, handle key signature requests, and all other user / dApp specific things. We need a way for the dApp to configure the resolvers in a specific way given the resolver's requirements (IPFS provider, Web3 provider, etc).
