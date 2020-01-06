@@ -23,7 +23,6 @@
   <dd>First Person, Second Person</dd>
 </dl>
 
-
 ## Summary
 
 Implements RFC-0002: Ethereum Tracing Cache
@@ -35,16 +34,16 @@ These changes happen within or near `ethereum_adapter.rs`, `store.rs` and `db_sc
 ### Limitations
 The problem of reorg turns out to be a particularly tricky one for the cache, mostly due to ranges of blocks being requested rather than individual hashes. To sidestep this problem, only blocks that are older than the reorg threshold will be eligible for caching.
 
-This workaround has an intended side effect. The target beneficiary of the workflow involving re-sync of recently deployed subgraphs. It may be undesirable to cache subgraphs which were not recently deployed and may never be re-synced. Such a subgraph would only incur the cost of caching, but never reap the benefits of reading from the cache. By only caching blocks outside the reorg threshold, only the subgraphs which have been recently deployed and are the most likely to benefit from caching are in fact cached.
+Additionally, there are some subgraphs which may require traces from all or a substantial number of blocks and don't make effective use of filtering. In particular, subgraphs which specify a call handler without a contract address fall into this category. In order to prevent the cache from bloating, any use of Ethereum traces which does not filter on a contract address will bypass the cache.
 
 ### EthereumTraceCache
 
 The implementation introduces the following trait, which is implemented primarily by `Store`.
 
 ```rust
-use std::ops::Range;
+use std::ops::RangeToInclusive;
 struct TracesInRange {
-    range: Range<u64>,
+    range: RangeToInclusive<u64>,
     traces: Vec<Trace>,
 }
 
@@ -52,31 +51,49 @@ pub trait EthereumTraceCache: Send + Sync + 'static {
     /// Attempts to retrieve traces from the cache. Returns ranges which were retrieved.
     /// The results may not cover the entire range of blocks. It is up to the caller to decide
     /// what to do with ranges of blocks that are not cached.
-    fn get_cache(contract_address: Option<H160>, blocks: Range<u64>
+    fn traces_for_blocks(contract_address: Option<H160>, blocks: Range<u64>
         ) -> Box<dyn Future<Output=Result<Vec<TracesInRange>, Error>>>;
-    fn append_cache(contract_address: Option<H160> traces: Vec<TracesInRange>);
+    fn add(contract_address: Option<H160> traces: Vec<TracesInRange>);
 }
 ```
 
 #### Block schema
 
-Each cached block will exist as its own row in the database. Here is the schema for that cache:
+Each cached block will exist as its own row in the database in an `eth_traces_cache` table.
 
 ```rust
-  id -> (Nullable<Bytea>, Integer), // (contract_address, block_number)
-  trace -> Jsonb // Or Bytea
+eth_traces_cache(id) {
+  id -> Integer,
+  network -> Text,
+  block_number: Integer,
+  contract_address: Bytea,
+  traces -> Jsonb,
+}
 ```
 
-Traces will be stored as Jsonb or Bytea using MessagePack, whichever is easier.
+A multi-column index will be added on network, block_number, and contract_address.
+
+Additionally, an `eth_traces_meta` table will be added to eventually enable cleaning out old data. It is substantially similar to the the existing `eth_call_meta` table.
+
+```rust
+eth_traces_meta(id) {
+  id -> (network, contract_address),
+  accessed_at -> Date,
+}
+```
+
+It can be noted that in the `eth_traces_cache` table, there is a very low cardinality for the value of the network row. It is inefficient for example to store the string `mainnet` millions of times and consider this value when querying. A data oriented approach would be to partition these tables on the value of the network. It is expected that hash partitioning available in Postgres 11 would be useful here, but the necessary dependencies won't be ready in time for this RFC. This may be revisited in the future.
 
 #### Valid Cache Range
-Because of the absence of trace data for a block is a valid cache result, the database must maintain a data structure indicating which ranges of the cache are valid.
+Because the absence of trace data for a block is a valid cache result, the database must maintain a data structure indicating which ranges of the cache are valid.
 
 This is the schema for that structure:
 ```rust
-start_block -> Integer
-end_block -> Integer
-contract_address -> Nullable<Bytea>
+id -> Integer,
+network -> Text,
+start_block -> Integer,
+end_block -> Integer,
+contract_address -> Nullable<Bytea>,
 ```
 
 When inserting data into the cache, removing data from the cache, or reading the cache, a serialized transaction must be used to preserve atomicity between the valid cache range structure and the cached blocks. Care must be taken to not rely on any data read outside of the serialized transaction, and for the extent of the serialized transaction to not span any async contexts that rely on any `Future` outside of the database itself. The definition of the `EthereumTraceCache` trait is designed to uphold these guarantees.
@@ -88,7 +105,7 @@ The primary user of the cache is `EtheriumAdapter<T>` in the `traces` function.
 
 The correct algorithm for retrieving traces from the cache is surprisingly nuanced. The complication arises from the interaction between multiple subgraphs which may require a subset of overlapping contract addresses. The rate at which indexing proceeds of these subgraphs can cause different ranges of the cache to be valid for a contract address in a single query.
 
-We want to minimize the cost of external requests for trace data. It is likely that it is better too...
+We want to minimize the cost of external requests for trace data. It is likely that it is better to...
  * Make fewer requests
  * Not ask for trace data that is already cached
  * Ask for trace data for multiple contract addresses within the same block when possible.
@@ -98,7 +115,7 @@ We want to minimize the cost of external requests for trace data. It is likely t
  Within this graph:
  * Edges which are labelled refer to some subset of the output data.
  * Edges which are not labelled refer to the entire set of the output data.
- * Each node executes once for each contiguous range it. That is, it merges all incoming data before executing, and executes the minimum possible times.
+ * Each node executes once for each contiguous range of blocks. That is, it merges all incoming data before executing, and executes the minimum possible times.
  * The example given is just for 2 addresses. The actual code must work on sets of addresses.
 
  ```mermaid
@@ -163,7 +180,7 @@ None
 
 None, aside from code comments
 
-**Estimates:**
+**Implementation Plan:**
 
 These estimates inflated to account for the author's lack of experience with Postgres, Ethereum, Futures0.1, and The Graph in general.
 
@@ -173,7 +190,7 @@ These estimates inflated to account for the author's lack of experience with Pos
   - (0.5) Trace Serialization/Deserialization
   - (1.0) Ranges Cache
   - (0.5) Concurrency/Transactions
-  - (0.5) Integration tests
+  - (0.5) Tests against Postgres
 - Data Flow
   - (3) Implementation
   - (1) Unit tests
