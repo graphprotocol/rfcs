@@ -133,7 +133,7 @@ We want to minimize the cost of external requests for trace data. It is likely t
  ```
 
  
-This construction is designed to make the fewest number of the most efficient calls possible. It is not as complicated as it looks. The actual construction can be expressed as sequential steps with a set of filters preceding eah step.
+This construction is designed to make the fewest number of the most efficient calls possible. It is not as complicated as it looks. The actual construction can be expressed as sequential steps with a set of filters preceding each step.
 
 ### Useful dependencies
 The feature deals a lot with ranges and sets. Operations like sum, subtract, merge, and find overlapping are used frequently. [nested_intervals](https://crates.io/crates/nested_intervals) is a crate which provides some of these operations.
