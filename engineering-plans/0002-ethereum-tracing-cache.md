@@ -41,9 +41,9 @@ Additionally, there are some subgraphs which may require traces from all or a su
 The implementation introduces the following trait, which is implemented primarily by `Store`.
 
 ```rust
-use std::ops::RangeToInclusive;
+use std::ops::RangeInclusive;
 struct TracesInRange {
-    range: RangeToInclusive<u64>,
+    range: RangeInclusive<u64>,
     traces: Vec<Trace>,
 }
 
@@ -180,7 +180,7 @@ None
 
 None, aside from code comments
 
-**Implementation Plan:**
+## Implementation Plan: ##
 
 These estimates inflated to account for the author's lack of experience with Postgres, Ethereum, Futures0.1, and The Graph in general.
 
