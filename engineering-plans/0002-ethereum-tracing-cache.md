@@ -73,19 +73,10 @@ eth_traces_cache(id) {
 
 A multi-column index will be added on network, block_number, and contract_address.
 
-Additionally, an `eth_traces_meta` table will be added to eventually enable cleaning out old data. It is substantially similar to the the existing `eth_call_meta` table.
-
-```rust
-eth_traces_meta(id) {
-  id -> (network, contract_address),
-  accessed_at -> Date,
-}
-```
-
 It can be noted that in the `eth_traces_cache` table, there is a very low cardinality for the value of the network row. It is inefficient for example to store the string `mainnet` millions of times and consider this value when querying. A data oriented approach would be to partition these tables on the value of the network. It is expected that hash partitioning available in Postgres 11 would be useful here, but the necessary dependencies won't be ready in time for this RFC. This may be revisited in the future.
 
 #### Valid Cache Range
-Because the absence of trace data for a block is a valid cache result, the database must maintain a data structure indicating which ranges of the cache are valid.
+Because the absence of trace data for a block is a valid cache result, the database must maintain a data structure indicating which ranges of the cache are valid in an `eth_traces_meta` table. This table also enables eventually implementing cleaning out old data.
 
 This is the schema for that structure:
 ```rust
@@ -94,6 +85,7 @@ network -> Text,
 start_block -> Integer,
 end_block -> Integer,
 contract_address -> Nullable<Bytea>,
+accessed_at -> Date,
 ```
 
 When inserting data into the cache, removing data from the cache, or reading the cache, a serialized transaction must be used to preserve atomicity between the valid cache range structure and the cached blocks. Care must be taken to not rely on any data read outside of the serialized transaction, and for the extent of the serialized transaction to not span any async contexts that rely on any `Future` outside of the database itself. The definition of the `EthereumTraceCache` trait is designed to uphold these guarantees.
