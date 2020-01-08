@@ -10,17 +10,14 @@
   <dt>Engineering Plan pull request</dt>
   <dd><a href="https://github.com/graphprotocol/rfcs/pull/9">https://github.com/graphprotocol/rfcs/pull/9</a></dd>
 
-  <dt>Obsoletes (if applicable)</dt>
-  <dd>None</dd>
-
   <dt>Date of submission</dt>
   <dd>2019-12-20</dd>
 
   <dt>Date of approval</dt>
-  <dd>YYYY-MM-DD</dd>
+  <dd>2020-01-07</dd>
 
   <dt>Approved by</dt>
-  <dd>First Person, Second Person</dd>
+  <dd>Jannis Pohlmann, Leo Yvens</dd>
 </dl>
 
 ## Summary
@@ -51,9 +48,9 @@ pub trait EthereumTraceCache: Send + Sync + 'static {
     /// Attempts to retrieve traces from the cache. Returns ranges which were retrieved.
     /// The results may not cover the entire range of blocks. It is up to the caller to decide
     /// what to do with ranges of blocks that are not cached.
-    fn traces_for_blocks(contract_address: Option<H160>, blocks: Range<u64>
+    fn traces_for_blocks(contract_address: Option<H160>, blocks: RangeInclusive<u64>
         ) -> Box<dyn Future<Output=Result<Vec<TracesInRange>, Error>>>;
-    fn add(contract_address: Option<H160> traces: Vec<TracesInRange>);
+    fn add(contract_address: Option<H160>, traces: Vec<TracesInRange>);
 }
 ```
 
