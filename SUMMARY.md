@@ -10,6 +10,7 @@
 - [Engineering Plans](./engineering-plans/index.md)
   - [Approved Plans](./engineering-plans/approved.md)
     - [PLAN-0001: GraphQL Query Prefetching](./engineering-plans/0001-graphql-query-prefetching.md)
+    - [PLAN-0002: Ethereum Tracing Cache](./engineering-plans/0002-ethereum-tracing-cache.md)
     - [PLAN-0003: Remove JSONB Storage](./engineering-plans/0003-remove-jsonb-storage.md)
   - [Obsolete Plans](./engineering-plans/obsolete.md)
   - [Rejected Plans](./engineering-plans/rejected.md)
