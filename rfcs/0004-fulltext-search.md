@@ -47,7 +47,7 @@ search bars that filter data across multiple fields of an Entity.
 
 With the proposed feature I aim to:
   - provide tools for subgraph developers to define composite search 
-    indexes that search across multiple fields in an entity, and
+    indexes that can search across multiple fields and entities, and
   - integrate powerful, user friendly text search that is flexible and 
     can be easily defined by a subgraph developer ultimately providing 
     the tools necesssary for front end developers to create effective 
