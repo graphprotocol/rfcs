@@ -91,15 +91,17 @@ For each fulltext search index a subgraph developer must be able to specify:
 The proposed process of adding a fulltext search index to an Entity 
 involves adding a special field to that Entity in the GraphQL schema of 
 the subgraph's definition. The subgraph developer will create a new virtual 
-field of type String that is marked with the special `@FullTextSearch` directive. 
-The directive will have two required parameters for specifying the language
- and the fields to be incorporated. Verification of the index definition 
- will ensure that all fields referenced are valid String type fields on 
- that entity. To be clear, the proposed interface will add the fulltext 
- search definitions to the subgraph deployment hash, so adding or updating 
- a fulltext search index will require an update to the subgraph.  
- With subgraph composition it will be possible to easily create new subgraphs 
- that add specific fulltext search indexes to an existing subgraph. 
+field of type String that is marked with the special `@index` directive. 
+The directive will have two required parameters for specifying the index
+`type` and `params`. Params fields are specific to the index type; in the 
+case of fulltext search there will be two params to specify: `language` 
+and `fields`. Verification of the index definition will ensure that all 
+fields referenced are valid String type fields. To be clear, the proposed 
+interface will add the fulltext search index definitions to the subgraph 
+deployment hash, so adding or updating a fulltext search index will require 
+an update to the subgraph.  With subgraph composition it will be possible 
+to easily create new subgraphs that add specific fulltext search indexes 
+to an existing subgraph. 
 
 Example fulltext search field definition:
 ```graphql
@@ -110,7 +112,17 @@ type ExampleItem @entity {
     specs: String!,
     address: Bytes!,
     marked: Boolean!,
-    itemSearch: String! @fullTextSearchIndex(language: "english", fields: [{name: "name", weight: 5}, {name: "description", weight: 3}, {name: "specs", weight: 1}])
+    itemSearch: String! @index(
+        type: "fulltext", 
+        params: {
+            language:"english", 
+            fields: [
+                {name: "name", weight: 5}, 
+                {name: "description", weight: 3}, 
+                {name: "specs", weight: 1},                
+            ],            
+        }
+    )
 }
 ```  
 
@@ -120,9 +132,9 @@ For each fulltext index three search algorithms will be made available to
 the end user: a simple text query, a standard ranking, and a cover 
 density ranking algorithm: 
   - `query`: search for the string in the indexed document. Several 
-    operators available: and, or, and proximity (`&`, `|`, `<->`.) 
+    operators are available: and, or, and proximity (`&`, `|`, `<->`.) 
     The proximity operator allows one to specify max distance: 
-    3 words apart → `<3>`. (filter suffix = ``)
+    3 words apart → `<3>`. (no filter suffix)
   - `standard ranking`: ranking based on the number of matching lexemes. 
     (filter suffix = `_rank`)
   - `cover density ranking`: Cover density is similar to the standard 
@@ -130,12 +142,12 @@ density ranking algorithm:
     to each other is taken into consideration. This function requires 
     lexeme positional information to perform its calculation, so it ignores 
     any "stripped" lexemes in the index.
-    (filter suffix = `_rank_cd`)
+    (filter suffix = `_proximity_rank`)
     
 Example Usage in a query (references the example Entity definition from above section): 
 ```graphql
 query {
-    exampleItems(first: 10, where: {itemSearch_rank_cd: "sarcastic"}) {
+    exampleItems(first: 10, where: {itemSearch_proximity_rank: "sarcastic&tea"}) {
         address
         name 
         description
@@ -147,7 +159,7 @@ query {
 
 Fulltext search query system implementations often involve specific systems 
 for storing and querying the text documents; however, in an effort to reduce 
-system complexity and feature implemtation time I propose starting with the 
+system complexity and feature implementation time I propose starting with the 
 fulltext search features built in to PostgreSQL.
 
 A FullText search field will get its own column in the Entity table just 
@@ -162,17 +174,17 @@ the indexed fulltext search data.
  
 
 Limitations of Postgres fulltext search indexes and search algorithms: 
-  - only certain languages available (expandable with plugins namely PGroonga), 
+  - only certain languages available (expandable with plugins like [PGroonga](https://pgroonga.github.io/)), 
   - select algorithms are available, and 
   - limited to PostgreSQL storage. 
 
 Alternative technologies (not in any particular order): 
-  Written in Rust:
-    - Tantivy (https://github.com/tantivy-search/tantivy)
-    - Toshi (https://github.com/toshi-search/Toshi)
-    - Sonic (https://github.com/valeriansaliou/sonic)
-    - MeiliSearch (https://github.com/meilisearch/MeiliSearch)
-    - Bayard (https://github.com/bayard-search/bayard)
+  - Written in Rust:
+    - [Tantivy](https://github.com/tantivy-search/tantivy)
+    - [Toshi](https://github.com/toshi-search/Toshi)
+    - [Sonic](https://github.com/valeriansaliou/sonic)
+    - [MeiliSearch](https://github.com/meilisearch/MeiliSearch)
+    - [Bayard](https://github.com/bayard-search/bayard)
 
 ## Compatibility
 
@@ -218,7 +230,7 @@ verification and allowing indexer node operators to experiment with
 algorithms and indexes in order to continue to improve query speed and results? 
 
 Since a fulltext search field is purely derivative of other Entity data 
-the addition or update of a @fullTextSearchIndex field does not require a 
-full blockchain resync, rather the index itself just needs to be rebuilt. 
+the addition or update of an @index field does not require a full blockchain 
+resync, rather the index itself just needs to be rebuilt. 
 How can we allow fulltext search index (and eventually other index types) 
 updates without requiring a full subgraph resync? 
