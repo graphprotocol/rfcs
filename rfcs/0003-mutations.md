@@ -5,7 +5,7 @@
   <dd>dOrg: Jordan Ellis, Nestor Amesty</dd>
 
   <dt>RFC pull request</dt>
-  <dd><a href="TODO">URL</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/10">URL</a></dd>
 
   <dt>Date of submission</dt>
   <dd>2019-12-20</dd>
@@ -23,23 +23,23 @@
 
 ## Summary
 
-GraphQL Mutations allow you to add executable functions to your schema. Callers can invoke these functions using GraphQL queries. An introduction to how Mutations are defined and work can be found [here](https://graphql.org/learn/queries/#mutations). This RFC will assume the reader understands how to use GraphQL Mutations in a traditional Web2 application. Going forward we'll describe how Mutations can be added to The Graph's toolchain, and used to replace web3 write operations the same way The Graph has replaced Web3 read operations.
+GraphQL mutations allow developers to add executable functions to their schema. Callers can invoke these functions using GraphQL queries. An introduction to how mutations are defined and work can be found [here](https://graphql.org/learn/queries/#mutations). This RFC will assume the reader understands how to use GraphQL mutations in a traditional Web2 application. This proposal describes how mutations are added to The Graph's toolchain, and used to replace web3 write operations the same way The Graph has replaced Web3 read operations.
 
 ## Goals & Motivation
 
-Currently, The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications ontop of complex protocols. Since dApps have two primary interactions with web3 protocols (reading & writing), the next logical addition is write support.
+The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications ontop of complex protocols. Since dApps have two primary interactions with web3 protocols (reading & writing), the next logical addition is write support.
 
-Protocol developers that currently use a subgraph still often publish a Javascript wrapper library for their dApp developers. This is done to help speed up dApp development and promote consistency with protocol usage patterns. With the addition of Mutations to the Graph Protocol's GraphQL tooling, Web3 reading & writing can now both be invoked through GraphQL queries. dApp developers can now simply refer to a single GraphQL schema that defines the entire protocol.
+Protocol developers that use a subgraph still often publish a Javascript wrapper library for their dApp developers (examples: [DAOstack](https://github.com/daostack/client), [ENS](https://github.com/ensdomains/ensjs), [LivePeer](https://github.com/livepeer/livepeerjs/tree/master/packages/sdk), [DAI](https://github.com/makerdao/dai.js/tree/dev/packages/dai), [Uniswap](https://github.com/Uniswap/uniswap-sdk)). This is done to help speed up dApp development and promote consistency with protocol usage patterns. With the addition of mutations to the Graph Protocol's GraphQL tooling, Web3 reading & writing can now both be invoked through GraphQL queries. dApp developers can now simply refer to a single GraphQL schema that defines the entire protocol.
 
 ## Urgency
 
-From a developer experience point of view I see this as urgent because it eliminates the need for protocol developers to manaually wrap their graphql query interfaces alongside user-friendly write functions. Additionally from a user experience point of view, mutations provide a solution for optimistic UI updates, which is something dApp developers have been wanting for a long time. Lastly with the whole protocol now defined in GraphQL, existing application layer code generators can now be used to hasten dApp development.
+This is urgent from a developer experience point of view. With this addition, it eliminates the need for protocol developers to manually wrap GraphQL query interfaces alongside developer-friendly write functions. Additionally, mutations provide a solution for optimistic UI updates, which is something dApp developers have been seeking for a long time (see [here](https://github.com/aragon/nest/issues/21)). Lastly with the whole protocol now defined in GraphQL, existing application layer code generators can now be used to hasten dApp development ([some examples](https://dev.to/graphqleditor/top-3-graphql-code-generators-1gnj)).
 
 ## Terminology
 
-* _Mutation_: GraphQL Mutation.  
-* _Resolver_: Resolver function that's mapped to a mutation.  
-* _Resolver State_: The resolver function's state (transactions sent, data logged, etc).  
+* _Mutation_: A GraphQL mutation.  
+* _Resolver_: Function that is used to execute a mutation.  
+* _Mutation State_: The state of a mutation being executed.  
 * _Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
 
 ## Detailed Design
@@ -62,7 +62,7 @@ dataSources: ...
 ...
 ```
 
-Alternatively, you can store the mutations manifest externally like so:  
+Alternatively, the mutation manifest can be external like so:  
 `subgraph.yaml`
 ```yaml
 specVersion: ...
@@ -232,7 +232,8 @@ const [exec, { loading, state }] = useMutation(
   }
 )
 
-// We can also utilize an optimistic response
+// Optimistic responses can be used to update
+// the UI before the execution has finished
 const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
@@ -271,10 +272,10 @@ The existing alternative that protocol developers are creating for dApp develope
 ## Open Questions
 
 - **Should the resolvers module be ES5 compliant?**  
-  We've been operating under this assumption while developing the prototype. We have since scrapped this requirement as it has proven nearly impossible to successfully transpile our own source, along with all our dependencies, into a single monolithic module. If anyone has experience doing this I would love chat!
+  The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
 - **How should the dApp configure the resolvers module?**  
-  The dApp knows best how to: connect to the various web3 networks, handle key signature requests, and all other user / dApp specific things. We need a way for the dApp to configure the resolvers in a specific way given the resolver's requirements (IPFS provider, Web3 provider, etc).
-- **What paradigm should the resolver state follow?**  
-  One option is to have the resolver's call into a single interface that modifys the backing data. Whenever this data is modified, the entirety of it is passed to the dApp. The downside here is that the dApp doesn't know what has changed within the data, and is forced to represent it in its entirety in order to not miss anything.  
+  The dApp knows best how to: connect to the various web3 networks, handle key signature requests, and all other user / dApp specific things. Therefore a way for the dApp to configure the resolvers in a specific way is required. The resolvers are still responsible for defining what configuration options are required by the dApp (IPFS provider, Web3 provider, etc).
+- **What paradigm should the mutation state follow?**  
+  One option is to have the resolver's call into a single interface that modifies the backing data. Whenever this data is modified, the entirety of it is passed to the dApp. The downside here is that the dApp doesn't know what has changed within the data, and is forced to represent it in its entirety in order to not miss anything.  
 
   Another option is to implement something similar to Redux, where the resolvers fire off events with corresponding payloads of data. These events map to reducers, which take in this payload of data and decide what to do with it. The dApp could implement these reducers, and choose how it would want to react to the various events.
