@@ -37,26 +37,39 @@ This is urgent from a developer experience point of view. With this addition, it
 
 ## Terminology
 
+* _Mutations_: Collection of mutations.  
 * _Mutation_: A GraphQL mutation.  
+* _Mutations Schema_: A GraphQL schema that defines a `type Mutation` that contains all mutations. Additionally, this schema can define other types to be used by the mutations, such as `input` and `interface` types.  
+* _Mutations Manifest_: A YAML manifest file that is used to add mutations to an existing subgraph manifest.  
+* _Mutation Resolvers_: Code module that contains all resolvers.  
 * _Resolver_: Function that is used to execute a mutation.  
-* _Mutation State_: The state of a mutation being executed.  
+* _Mutation State_: The state of a mutation being executed. It's passed to the resolver through the mutation context.  
+* _Mutation Context_: A context object that's created for every mutation that's executed. It's passed as an argument to the resolver.  
+* _Config_: Collection of config properties required by the mutation resolvers.  
+* _Config Property_: A single property within the config (ex: ipfs, ethereum, etc).  
+* _Config Generator_: A function that takes a config value, and returns a config property. For example, "localhost:5001" as a config value gets turned into a new IPFS client by the config generator.
+* _Config Value_: An initialization value that's passed into the config generator. This config value is provided by the dApp developer.
 * _Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
 
 ## Detailed Design
 
-### Mutation Manifest
+The sections below illustrate how a developer would add mutations to an existing subgraph, and add the mutations to a dApp.
+
+### Mutations Manifest
+
+The subgraph manifest (`subgraph.yaml`) now has an extra property `mutations` which is the mutations manifest.
 
 `subgraph.yaml`
 ```yaml
 specVersion: ...
 ...
 mutations:
-  specVersion: 0.0.1
   repository: https://npmjs.com/package/...
   schema:
     file: ./mutations/schema.graphql
   resolvers:
-    kind: javascript
+    apiVersion: 0.0.1
+    kind: javascript/es5
     file: ./mutations/index.js
 dataSources: ...
 ...
@@ -74,16 +87,18 @@ dataSources: ...
 ```
 `mutations/mutations.yaml`
 ```yaml
-specVersion: 0.0.1
 repository: https://npmjs.com/package/...
 schema:
   file: ./schema.graphql
 resolvers:
-  kind: javascript
+  apiVersion: 0.0.1
+  kind: javascript/es5
   file: ./index.js
 ```
 
-### Mutation Schema
+### Mutations Schema
+
+The mutations schema defines all of the mutations in our subgraph. The mutations schema is a super-set of the subgraph's schema. For example, starting a base subgraph schema:
 `schema.graphql`
 ```graphql
 type MyEntity @entity {
@@ -93,11 +108,17 @@ type MyEntity @entity {
 }
 ```
 
+Developers can define mutations that reference these subgraph schema types. Additionally new `input` and `interface` types can be defined for the mutations to use:
 `mutations/schema.graphql`
 ```graphql
 input MyEntityOptions {
   name: String!
   value: BigInt!
+}
+
+interface NewNameSet {
+  oldName: String!
+  newName: String!
 }
 
 type Mutation {
@@ -108,12 +129,20 @@ type Mutation {
   setEnityName(
     entity: MyEntity!
     name: String!
-  ): MyEntity!
+  ): NewNameSet!
 }
 ```
-**NOTE:** GraphQL types from the subgraph's schema.graphql are automatically included in this file.
+
+`graph-cli` handles the combining, parsing, and validating of these two schemas. The `graph-cli` verifies that the mutations schema defines a `type Mutation`, that all of the mutations within it are defined in the resolvers module (see next section).  
 
 ### Mutation Resolvers
+
+Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the query. They are executed locally within the client application.
+
+Mutation resolvers of kind `javascript` take the form of a javascript module. This module is expected to have a default export that contains the following properties:
+  * resolvers - The mutation resolver functions.
+  * config - A collection of config generators.
+
 `mutations/index.js`
 ```javascript
 const resolvers = {
@@ -122,8 +151,8 @@ const resolvers = {
       // Extract mutation arguments
       const { name, value } = args.options
 
-      // Use configuration properties created by the
-      // config generator functions below
+      // Use config properties created by the
+      // config generator functions
       const { ethereum, ipfs } = context.graph.config
 
       // Fetch datasource addresses & abis
@@ -133,8 +162,8 @@ const resolvers = {
 
       // Modify a state object, which relays updates back
       // to the subscribed dApp
-      const { mutationState } = context.graph
-      mutationState.addTransaction("tx_hash")
+      const { state } = context.graph
+      state.addTransaction("tx_hash")
 
       ...
     },
@@ -144,7 +173,7 @@ const resolvers = {
   }
 }
 
-// Configuration Setters
+// Config generators
 const config = {
   // These function arguments are passed in by the dApp
   ethereum (provider) {
@@ -155,6 +184,11 @@ const config = {
   },
   customProperty (value) {
     return value + 2
+  },
+  rootProperty: {
+    nestedProperty (value) {
+      ...
+    }
   }
 }
 
@@ -177,7 +211,7 @@ const mutations = createMutations({
   mutations: myMutations,
   subgraph: "my-subgraph",
   node: "http://localhost:8080",
-  // Configuration Getters
+  // Config values, which will be passed to the generators
   config: {
     ethereum: async () => {
       const { ethereum } = (window as any)
@@ -185,7 +219,10 @@ const mutations = createMutations({
       return ethereum
     },
     ipfs: "http://localhost:5001",
-    customProperty: 5
+    customProperty: 5,
+    rootProperty: {
+      nestedProperty: "foo"
+    }
   }
 })
 
@@ -221,7 +258,7 @@ const CREATE_ENTITY = gql`
   }
 `
 
-// state === resolver's state
+// state === mutation state
 const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
