@@ -310,8 +310,7 @@ The existing alternative that protocol developers are creating for dApp develope
 
 - **Should the resolvers module be ES5 compliant?**  
   The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
-- **How should the dApp configure the resolvers module?**  
-  The dApp knows best how to: connect to the various web3 networks, handle key signature requests, and all other user / dApp specific things. Therefore a way for the dApp to configure the resolvers in a specific way is required. The resolvers are still responsible for defining what configuration options are required by the dApp (IPFS provider, Web3 provider, etc).
+
 - **What paradigm should the mutation state follow?**  
   One option is to have the resolver's call into a single interface that modifies the backing data. Whenever this data is modified, the entirety of it is passed to the dApp. The downside here is that the dApp doesn't know what has changed within the data, and is forced to represent it in its entirety in order to not miss anything.  
 
