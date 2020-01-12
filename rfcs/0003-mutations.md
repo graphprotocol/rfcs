@@ -53,11 +53,11 @@ This is urgent from a developer experience point of view. With this addition, it
 
 ## Detailed Design
 
-The sections below illustrate how a developer would add mutations to an existing subgraph, and add the mutations to a dApp.
+The sections below illustrate how a developer would add mutations to an existing subgraph, and then add those mutations to a dApp.
 
 ### Mutations Manifest
 
-The subgraph manifest (`subgraph.yaml`) now has an extra property `mutations` which is the mutations manifest.
+The subgraph manifest (`subgraph.yaml`) now has an extra property named `mutations` which is the mutations manifest.
 
 `subgraph.yaml`
 ```yaml
@@ -98,7 +98,7 @@ resolvers:
 
 ### Mutations Schema
 
-The mutations schema defines all of the mutations in our subgraph. The mutations schema is a super-set of the subgraph's schema. For example, starting a base subgraph schema:
+The mutations schema defines all of the mutations in our subgraph. The mutations schema is a super-set of the subgraph's schema. For example, starting from a base subgraph schema:  
 `schema.graphql`
 ```graphql
 type MyEntity @entity {
@@ -108,7 +108,7 @@ type MyEntity @entity {
 }
 ```
 
-Developers can define mutations that reference these subgraph schema types. Additionally new `input` and `interface` types can be defined for the mutations to use:
+Developers can define mutations that reference these subgraph schema types. Additionally new `input` and `interface` types can be defined for the mutations to use:  
 `mutations/schema.graphql`
 ```graphql
 input MyEntityOptions {
