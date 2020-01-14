@@ -87,71 +87,98 @@ For each fulltext search index a subgraph developer must be able to specify:
     1. a language, 
     2. a set of text document fields to include,
     3. relative weighting for each field in the index.
+    4. a choice of ranking algorithm for sorting query result items
 
-The proposed process of adding a fulltext search index to an Entity 
-involves adding a special field to that Entity in the GraphQL schema of 
-the subgraph's definition. The subgraph developer will create a new virtual 
-field of type String that is marked with the special `@index` directive. 
-The directive will have two required parameters for specifying the index
-`type` and `params`. Params fields are specific to the index type; in the 
-case of fulltext search there will be two params to specify: `language` 
-and `fields`. Verification of the index definition will ensure that all 
-fields referenced are valid String type fields. To be clear, the proposed 
-interface will add the fulltext search index definitions to the subgraph 
-deployment hash, so adding or updating a fulltext search index will require 
-an update to the subgraph.  With subgraph composition it will be possible 
-to easily create new subgraphs that add specific fulltext search indexes 
-to an existing subgraph. 
+The proposed process of adding one or more fulltext search index to an Entity 
+involves adding one or more fulltext directive to the `_Schema_` type in the 
+subgraph's GraphQL schema.  Each fulltext definition will have four required
+top level parameters: `name`, `language`, `algorithm`, and `include`. 
+The fulltext search definitions will be used to generate queries on the GraphQL
+schema that will be exposed to the end user.  
 
-Example fulltext search field definition:
+Applying fulltext search indexes across entities will be a powerful 
+abstraction allowing users to search across all relevant entities in one
+query. An index search across entities will by definition have polymorphic
+results, so in that case a union type will also be generated in the schema 
+for the query result items. 
+
+Verification of the index definition will ensure that all fields referenced 
+are valid String type fields. To be clear, the proposed interface will add 
+the fulltext search index definitions to the subgraph deployment hash, so 
+adding or updating a fulltext search index will require an update to the subgraph. 
+With subgraph composition it will be possible to easily create new subgraphs 
+that add specific fulltext search indexes to an existing subgraph. 
+
+Example fulltext search definition:
+
 ```graphql
-type ExampleItem @entity {
-    id: ID!,
-    name: String!,
-    description: String!,
-    specs: String!,
-    address: Bytes!,
-    marked: Boolean!,
-    itemSearch: String! @index(
-        type: "fulltext", 
-        params: {
-            language:"english", 
-            fields: [
-                {name: "name", weight: 5}, 
-                {name: "description", weight: 3}, 
-                {name: "specs", weight: 1},                
-            ],            
-        }
-    )
+type _Schema_ 
+  @fulltext(
+    name: "media"
+    ...
+  )
+  @fulltext(
+    name: "search",
+    language: "english",
+    algorithm: "ranked",
+    include: [
+      {
+        entity: "Band",
+        fields: [
+          { name: "name", weight: 5 },
+        ]
+      },
+      {
+        entity: "Album",
+        fields: [
+          { name: "title", weight: 5 },
+        ]
+      },
+      {
+        entity: "Musician",
+        fields: [
+          { name: "name", weight: 10 },
+          { name: "bio", weight: 5 },
+        ]
+      }
+    ]
+  )
+```
+
+The schema generated from the above definition: 
+```graphql
+union FulltextMediaResultItem = ...
+union FulltextSearchResultItem = Band | Album | Musician
+type Query {
+  media...
+  search(text: String!, first: Int, skip: Int, block: Int): [FulltextSearchResultItem!]!
 }
-```  
+```
 
 ### GraphQL Query interface
 
-For each fulltext index three search algorithms will be made available to 
-the end user: a simple text query, a standard ranking, and a cover 
-density ranking algorithm: 
-  - `query`: search for the string in the indexed document. Several 
-    operators are available: and, or, and proximity (`&`, `|`, `<->`.) 
-    The proximity operator allows one to specify max distance: 
-    3 words apart → `<3>`. (no filter suffix)
-  - `standard ranking`: ranking based on the number of matching lexemes. 
-    (filter suffix = `_rank`)
-  - `cover density ranking`: Cover density is similar to the standard 
-    fulltext search ranking except that the proximity of matching lexemes 
-    to each other is taken into consideration. This function requires 
-    lexeme positional information to perform its calculation, so it ignores 
-    any "stripped" lexemes in the index.
-    (filter suffix = `_proximity_rank`)
-    
-Example Usage in a query (references the example Entity definition from above section): 
+End users of the subgraph will have access to the queries generated for the
+fulltext search indexes alongside the other queries generated for each 
+entity in the subgraph.  In the case of a fulltext search index that spans
+multiple entities, [inline fragments](https://graphql.org/learn/queries/#inline-fragments) 
+may be used in the query to deal with the polymorphic result items. In the 
+front-end the `__typename` in each result item can be used to render the 
+components accordingly.  
+
+In the "text" parameter supplied to the query there will be one special 
+operator supported, the proximity operator. Several operators are available: 
+and, or, and proximity (`&`, `|`, `<->`.) The proximity operator allows 
+one to specify max distance between search terms: 3 words apart → `<3>`. 
+
+Example query using inline fragments and the proximity operator: 
 ```graphql
 query {
-    exampleItems(first: 10, where: {itemSearch_proximity_rank: "sarcastic&tea"}) {
-        address
-        name 
-        description
-    }
+  search(text: "Bob<3>run") {
+    __typename
+    ... on Band { name label { id } }
+    ... on Album { title numberOfTracks }
+    ... on Musician { name bio }
+  }
 }
 ```
 
@@ -165,16 +192,17 @@ fulltext search features built in to PostgreSQL.
 A FullText search field will get its own column in the Entity table just 
 like any other field; however, the data stored will be the result of the 
 lexical, morphological analysis of text documents performed on the fields 
-included in the index. The fulltext search field will be created using 
-Postgres ts_vector function and will be indexed using a GIN index. 
-The GraphQL query interface will expose PostgreSQL's to_tsquery(), 
-ts_rank(), and ts_rank_cd() functions in a pretty direct manner 
-(see the GraphQL Query Interface section above for details) for querying 
-the indexed fulltext search data.  
- 
+included in the index. The fulltext search field will be created using the 
+Postgres ts_vector function and will be indexed using a GIN index. The subgraph 
+developer will define a ranking algorithm to be used to sort query results,
+so the end-user facing API remains easy to use without any requirement to 
+understand the ranking algorithms.   
 
 Limitations of Postgres fulltext search indexes and search algorithms: 
   - only certain languages available (expandable with plugins like [PGroonga](https://pgroonga.github.io/)), 
+    - **languages supported out of the box**: 
+        Danish, Dutch, English, Finnish, French, German, Hungarian, Italian, 
+        Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish, and Turkish.
   - select algorithms are available, and 
   - limited to PostgreSQL storage. 
 
