@@ -1,4 +1,4 @@
-# PLAN-0002: Subgraph Schema Merging
+# PLAN-0004: Subgraph Schema Merging
 
 <dl>
   <dt>Author</dt>
