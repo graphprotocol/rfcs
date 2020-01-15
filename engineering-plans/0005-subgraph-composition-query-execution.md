@@ -101,7 +101,7 @@ TODO
 
 ## Migration
 
-Subgraph composition is an additive feature and does require a migration plan.
+Subgraph composition is an additive feature and does not require a migration plan.
 
 ## Documentation
 
