@@ -84,7 +84,7 @@ Since the `@subgraphId` won't be available for this type during query execution,
 
 ### Query Correct Subgraph
 
-Imported types in a merged schema which are available on the Graph Node executing the query will have `@subgraphId` directives actings are pointers to the relevant database table.
+Imported types in a merged schema which are available on the Graph Node executing the query will have `@subgraphId` and `@originalName` directives actings are pointers to the relevant database table.
 In the prefetch portion of query resolution we run JOINs across tables for a subgraph's types to aggregate the children for a single parent or a set of parent objects. Instead of modifying sql for the JOIN
 to ensure that a join across tables for two different subgraphs works, we can remove the JOIN and make the prefetch code only execute queries on a single table at a time.
 
@@ -99,11 +99,9 @@ Do not allow subgraph composition for subgraphs which use the JSONB storage engi
 
 ### Unit Tests:
 
--
-
 ### Integration Tests:
 
-1. Querying an A and [A] with an imported field B and [B] with an imported field C
+1. Querying an A || [A] with an imported field B || [B] with an imported field C
 
 ## Migration
 
