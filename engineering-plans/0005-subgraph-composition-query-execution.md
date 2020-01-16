@@ -97,7 +97,13 @@ Do not allow subgraph composition for subgraphs which use the JSONB storage engi
 
 ## Tests
 
-TODO
+### Unit Tests:
+
+-
+
+### Integration Tests:
+
+1. Querying an A and [A] with an imported field B and [B] with an imported field C
 
 ## Migration
 
@@ -105,11 +111,15 @@ Subgraph composition is an additive feature and does not require a migration pla
 
 ## Documentation
 
+Document the following aspects of query execution along side more general subgraph composition documentation:
+
+1. New runtime errors which could occur during query execution
 
 ## Implementation Plan
 
-TODO
+- Support custom type names (1d)
+- Codify new query execution runtime errors (1d)
+- Add subgraph composition feature flag (1d)
+- Ensure correct subgraph is queried during single object resolution and prefetch paths (3d)
 
 ## Open Questions
-
-TODO
