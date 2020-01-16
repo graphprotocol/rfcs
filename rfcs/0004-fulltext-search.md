@@ -63,15 +63,26 @@ should be prioritized.
 
 ## Terminology
 
-- `lexeme`: a basic lexical unit of a language, consisting of one word or 
+- _lexeme_: a basic lexical unit of a language, consisting of one word or 
   several words, considered as an abstract unit, and applied to a family 
   of words related by form or meaning.
-- `morphology (linguistics)`: the study of words, how they are formed, 
+- _morphology (linguistics)_: the study of words, how they are formed, 
   and their relationship to other words in the same language. 
-- `fulltext search index`: the result of lexical and morphological 
+- _fulltext search index_: the result of lexical and morphological 
   analysis (stemming) of a set of text documents.  It provides frequency 
   and location for the language-specific stems found in the text documents 
   being indexed. 
+- _ranking algorithm_: "Ranking attempts to measure how relevant documents 
+  are to a particular query, so that when there are many matches the most 
+  relevant ones can be shown first." [- Postgres Documentation](https://www.postgresql.org/docs/11/textsearch-controls.html#TEXTSEARCH-RANKING-SEARCH-RESULTS)
+  
+  **Algorithms**:
+  - _standard ranking_: ranking based on the number of matching lexemes.     
+  - _cover density ranking_: Cover density is similar to the standard 
+    fulltext search ranking except that the proximity of matching lexemes 
+    to each other is taken into consideration. This function requires 
+    lexeme positional information to perform its calculation, so it ignores 
+    any "stripped" lexemes in the index.            
 
 ## Detailed Design
 
