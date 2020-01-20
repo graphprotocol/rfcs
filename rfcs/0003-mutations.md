@@ -140,8 +140,8 @@ type Mutation {
 Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries. They are executed locally within the client application.
 
 Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript module. This module is expected to have a default export that contains the following properties:
-  * resolvers - The mutation resolver functions.
-  * config - A collection of config generators.
+  * `resolvers` - The mutation resolver functions.
+  * `config` - A collection of config generators.
 
 `mutations/index.js`
 ```javascript
