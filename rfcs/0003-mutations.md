@@ -133,7 +133,7 @@ type Mutation {
 }
 ```
 
-`graph-cli` handles the combining, parsing, and validating of these two schemas. The `graph-cli` verifies that the mutations schema defines a `type Mutation`, that all of the mutations within it are defined in the resolvers module (see next section).  
+`graph-cli` handles the parsing and validating of these two schemas. It verifies that the mutations schema defines a `type Mutation` and that all of the mutations within it are defined in the resolvers module (see next section).  
 
 ### Mutation Resolvers
 
