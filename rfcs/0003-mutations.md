@@ -126,7 +126,7 @@ type Mutation {
     options: MyEntityOptions!
   ): MyEntity!
 
-  setEnityName(
+  setEntityName(
     entity: MyEntity!
     name: String!
   ): NewNameSet!
