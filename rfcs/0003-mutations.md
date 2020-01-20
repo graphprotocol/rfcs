@@ -98,7 +98,7 @@ resolvers:
 
 ### Mutations Schema
 
-The mutations schema defines all of the mutations in the subgraph. The mutations schema is a super-set of the subgraph's schema. For example, starting from a base subgraph schema:  
+The mutations schema defines all of the mutations in the subgraph. The mutations schema builds on the subgraph schema, allowing the use of types from the subgraph schema, as well as defining new types that are used only in the context of mutations. For example, starting from a base subgraph schema:  
 `schema.graphql`
 ```graphql
 type MyEntity @entity {
