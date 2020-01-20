@@ -137,7 +137,7 @@ type Mutation {
 
 ### Mutation Resolvers
 
-Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the query. They are executed locally within the client application.
+Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries. They are executed locally within the client application.
 
 Mutation resolvers of kind `javascript` take the form of a javascript module. This module is expected to have a default export that contains the following properties:
   * resolvers - The mutation resolver functions.
