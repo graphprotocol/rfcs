@@ -1,4 +1,4 @@
-# RFC-0000: Template
+# RFC-0004: Fulltext Search
 
 <dl>
   <dt>Author</dt>
@@ -26,40 +26,36 @@
 
 ## Summary
 
-This RFC proposes adding a fulltext search filter type to the GraphQL API 
-to allow subgraph developers to specify language-specific, lexical, 
-composite filters that end users can use in their queries. The fulltext 
-index will be created by examining all words in a document, breaking it 
-into individul words and phrases (lexical analysis), and collapsing 
+The fulltext search filter type is a feature of the GraphQL API that
+allows subgraph developers to specify language-specific, lexical,
+composite filters that end users can use in their queries. The fulltext
+search feature examines all words in a document, breaking it into
+individual words and phrases (lexical analysis), and collapsing
 variations of words into a single index term (stemming.)
 
 ## Goals & Motivation
 
-The current set of string filters available in our GraphQL API is lacking 
-the tools needed to build effective, modern interfaces. Wildcard string 
-matching does provide string filtering, but users have come to expect the 
-easy to use filtering that comes with fulltext search systems.
+The current set of string filters available in the GraphQL API is lacking 
+fulltext search capabilities that enable efficient searches across entities
+and attributes. Wildcard string matching does provide string filtering, but 
+users have come to expect the easy to use filtering that comes with fulltext 
+search systems.
 
-To facilitate building effective user interfaces we must provide human-user 
-friendly query filtering. Lexical, composite fulltext search filters can 
-provide the tools necessary for front-end developers to implement powerful 
-search bars that filter data across multiple fields of an Entity.
+To facilitate building effective user interfacee human-user friendly query 
+filtering is essential. Lexical, composite fulltext search filters can provide 
+the tools necessary for front-end developers to implement powerful search 
+bars that filter data across multiple fields of an Entity.
 
-With the proposed feature I aim to:
-  - provide tools for subgraph developers to define composite search 
-    indexes that can search across multiple fields and entities, and
-  - integrate powerful, user friendly text search that is flexible and 
-    can be easily defined by a subgraph developer ultimately providing 
-    the tools necesssary for front end developers to create effective 
-    user interfaces without the need to middleware.
+The proposed feature aims to provide tools for subgraph developers to define 
+composite search APIs that can search across multiple fields and entities.
      
 ## Urgency
 
-A delay in adding the fulltext search feature  will not create issues with 
-current deployments. However, it will represent a realization of part of 
-the long term vision for the query network. Also several high profile users 
-have communicated that it may be a conversion blocker, so implementation 
-should be prioritized. 
+A delay in adding the fulltext search feature will not create issues
+with current deployments. However, the feature will represent a
+realization of part of the long term vision for the query network. In
+addition, several high profile users have communicated that it may be a
+conversion blocker. Implementation should be prioritized. 
 
 ## Terminology
 
@@ -86,39 +82,35 @@ should be prioritized.
 
 ## Detailed Design
 
-### Subgraph Definition
+### Subgraph Schema
 
-Part of the power of fulltext search indexes are their flexibility, so 
-it is important to expose a simple interface to facilitate useful 
-applications of the index and ulimately aim to reduce the need to create 
-new subgraphs for the express purpose of updating fulltext search fields 
-for end-use cases. 
+Part of the power of the fulltext search API is the flexibility, so 
+it is important to expose a simple interface to facilitate useful applications 
+of the index and aim to reduce the need to create new subgraphs for the 
+express purpose of updating fulltext search fields. 
 
-For each fulltext search index a subgraph developer must be able to specify:
+For each fulltext search API a subgraph developer must be able to specify:
     1. a language, 
     2. a set of text document fields to include,
-    3. relative weighting for each field in the index.
-    4. a choice of ranking algorithm for sorting query result items
+    3. relative weighting for each field,
+    4. a choice of ranking algorithm for sorting query result items.
 
-The proposed process of adding one or more fulltext search index to an Entity 
-involves adding one or more fulltext directive to the `_Schema_` type in the 
-subgraph's GraphQL schema.  Each fulltext definition will have four required
-top level parameters: `name`, `language`, `algorithm`, and `include`. 
-The fulltext search definitions will be used to generate queries on the GraphQL
-schema that will be exposed to the end user.  
+The proposed process of adding one or more fulltext search API involves
+adding one or more fulltext directive to the `_Schema_` type in the
+subgraph's GraphQL schema. Each fulltext definition will have four
+required top level parameters: `name`, `language`, `algorithm`, and
+`include`. The fulltext search definitions will be used to generate
+query fields on the GraphQL schema that will be exposed to the end user.
 
-Applying fulltext search indexes across entities will be a powerful 
-abstraction allowing users to search across all relevant entities in one
-query. An index search across entities will by definition have polymorphic
-results, so in that case a union type will also be generated in the schema 
-for the query result items. 
+Enabling fulltext search across entities will be a powerful abstraction 
+that allows users to search across all relevant entities in one query. Such 
+a search will by definition have polymorphic results. To address this, a 
+union type will be generated in the schema for the fulltext search results. 
 
-Verification of the index definition will ensure that all fields referenced 
-are valid String type fields. To be clear, the proposed interface will add 
-the fulltext search index definitions to the subgraph deployment hash, so 
-adding or updating a fulltext search index will require an update to the subgraph. 
-With subgraph composition it will be possible to easily create new subgraphs 
-that add specific fulltext search indexes to an existing subgraph. 
+Validation of the fulltext definition will ensure that all fields referenced 
+in the directive are valid String type fields. With subgraph composition 
+it will be possible to easily create new subgraphs that add specific fulltext 
+search capabilities to an existing subgraph. 
 
 Example fulltext search definition:
 
@@ -131,7 +123,7 @@ type _Schema_
   @fulltext(
     name: "search",
     language: "english",
-    algorithm: "ranked",
+    algorithm: ranked, # variant of `_FullTextAlgorithm` enum
     include: [
       {
         entity: "Band",
@@ -158,28 +150,32 @@ type _Schema_
 
 The schema generated from the above definition: 
 ```graphql
-union FulltextMediaResultItem = ...
-union FulltextSearchResultItem = Band | Album | Musician
+union _FulltextMediaEntity = ...
+union _FulltextSearchEntity = Band | Album | Musician
 type Query {
   media...
-  search(text: String!, first: Int, skip: Int, block: Int): [FulltextSearchResultItem!]!
+  search(text: String!, first: Int, skip: Int, block: Block_height): [FulltextSearchResultItem!]!
 }
 ```
 
 ### GraphQL Query interface
 
-End users of the subgraph will have access to the queries generated for the
-fulltext search indexes alongside the other queries generated for each 
-entity in the subgraph.  In the case of a fulltext search index that spans
-multiple entities, [inline fragments](https://graphql.org/learn/queries/#inline-fragments) 
-may be used in the query to deal with the polymorphic result items. In the 
-front-end the `__typename` in each result item can be used to render the 
-components accordingly.  
+End users of the subgraph will have access to the fulltext search
+queries alongside the other queries available for each entity in the
+subgraph. In the case of a fulltext search defined across multiple
+entities,
+[inline fragments](https://graphql.org/learn/queries/#inline-fragments)
+may be used in the query to deal with the polymorphic result items. In
+the front-end the `__typename` field can be used to distinguish the
+concrete entity types of the returned results.
 
-In the "text" parameter supplied to the query there will be one special 
-operator supported, the proximity operator. Several operators are available: 
-and, or, and proximity (`&`, `|`, `<->`.) The proximity operator allows 
-one to specify max distance between search terms: 3 words apart → `<3>`. 
+In the `text` parameter supplied to the query there will be several operators
+available to the end user.  Included are the and, or, and proximity operators
+(`&`, `|`, `<->`.) The special, proximity operator allows clients to specify 
+the maximum distance between search terms: `foo<3>bar` is equivalent to 
+requesting that `foo` and `bar` are at most three words apart. 
+
+
 
 Example query using inline fragments and the proximity operator: 
 ```graphql
@@ -197,33 +193,18 @@ query {
 
 Fulltext search query system implementations often involve specific systems 
 for storing and querying the text documents; however, in an effort to reduce 
-system complexity and feature implementation time I propose starting with the 
-fulltext search features built in to PostgreSQL.
+system complexity and feature implementation time I propose starting with 
+extending the current store interface and storage implemenation with fulltext 
+search features rather than use a fulltext specific interface and storage
+system.
 
-A FullText search field will get its own column in the Entity table just 
-like any other field; however, the data stored will be the result of the 
-lexical, morphological analysis of text documents performed on the fields 
-included in the index. The fulltext search field will be created using the 
-Postgres ts_vector function and will be indexed using a GIN index. The subgraph 
-developer will define a ranking algorithm to be used to sort query results,
-so the end-user facing API remains easy to use without any requirement to 
-understand the ranking algorithms.   
-
-Limitations of Postgres fulltext search indexes and search algorithms: 
-  - only certain languages available (expandable with plugins like [PGroonga](https://pgroonga.github.io/)), 
-    - **languages supported out of the box**: 
-        Danish, Dutch, English, Finnish, French, German, Hungarian, Italian, 
-        Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish, and Turkish.
-  - select algorithms are available, and 
-  - limited to PostgreSQL storage. 
-
-Alternative technologies (not in any particular order): 
-  - Written in Rust:
-    - [Tantivy](https://github.com/tantivy-search/tantivy)
-    - [Toshi](https://github.com/toshi-search/Toshi)
-    - [Sonic](https://github.com/valeriansaliou/sonic)
-    - [MeiliSearch](https://github.com/meilisearch/MeiliSearch)
-    - [Bayard](https://github.com/bayard-search/bayard)
+A FullText search field will get its own column in a table dedicated to fulltext
+data. The data stored will be the result of the lexical, morphological analysis 
+of text documents performed on the fields included in the index. The fulltext 
+search field will be created using the Postgres ts_vector function and will 
+be indexed using a GIN index. The subgraph developer will define a ranking 
+algorithm to be used to sort query results,so the end-user facing API remains 
+easy to use without any requirement to understand the ranking algorithms.   
 
 ## Compatibility
 
@@ -232,28 +213,33 @@ will be necessary for existing subgraph deployments.
 
 ## Drawbacks and Risks
 
-There is little risk in implementing this feature.  The proposed solution 
-uses native Postgres fulltext features and there is a nonzero probability 
-this choice results in slower than optimal write and read times; 
-however the tradeoff in implementation time/complexity and the existence 
-of production use case testimonials tempers my apprehension here. 
+The proposed solution uses native Postgres fulltext features and there is 
+a nonzero probability this choice results in slower than optimal write and 
+read times; however the tradeoff in implementation time/complexity and the 
+existence of production use case testimonials tempers my apprehension here. 
 
-Are there any desired "fulltext search like" capabilities that I've missed in this proposal?   
+In future phases of the network the storage layer may get a redesign with 
+indexes being overhauled to facilitate query result verification. Postgres
+based fulltext search implementation would not be translatable to another 
+storage system, so at the least a reevaluation of the tools used for analysis, 
+indexing, and querying would be required.  
 
 ## Alternatives
 
-An alternative design for the feature would allow more flexibility for 
-Graph Node operators in their index implementation and create a marketplace 
-for indexes. This design moved the definition of custom indexes out of the 
-subgraph definition; the subgraph would be deployed without them and they 
-could be added later using a new Graph Explorer interface (in Hosted-Service context) 
-or a JSON-RPC request directly to a Graph Node. One of the benefits of this 
-design is that the definition of uniqueness for a subgraph does not include 
-the custom indexes, so a new subgraph deployment and corresponding syncing 
-work does not have to be added in order to create or update an index. 
-However, it also introduces significant added complexity: will a separate 
-query marketplace and discovery registry then be required for finding nodes 
-with your needed subgraph-index combination.  
+An alternative design for the feature would allow more flexibility for
+Graph Node operators in their index implementation and create a
+marketplace for indexes. In the alternate, the definition of fulltext
+search indexes could be moved out of the subgraph schema. The subgraph
+would be deployed without them and they could be added later using a new
+Graph Explorer interface (in Hosted-Service context) or a JSON-RPC
+request directly to a Graph Node. Moving the creation of fulltext search
+indexes/queries out of the schema would mean that that the definition of
+uniqueness for a subgraph does not include the custom indexes, so a new
+subgraph deployment and subgraph re-syncing work does not have to be
+added in order to create or update an index. However, it also introduces
+significant added complexity. A separate query marketplace and discovery
+registry would be required for finding nodes with the needed
+subgraph-index combination.
 
 ## Open Questions
 
@@ -268,8 +254,8 @@ prescriptive about the indexes and algorithms in order to allow formal
 verification and allowing indexer node operators to experiment with 
 algorithms and indexes in order to continue to improve query speed and results? 
 
-Since a fulltext search field is purely derivative of other Entity data 
-the addition or update of an @index field does not require a full blockchain 
-resync, rather the index itself just needs to be rebuilt. 
-How can we allow fulltext search index (and eventually other index types) 
-updates without requiring a full subgraph resync? 
+Since a fulltext search field is purely derivative of other Entity data
+the addition or update of an @fulltext directive does not require a full
+blockchain resync, rather the index itself just needs to be rebuilt.
+There is room for optimization in the future by allowing fulltext search
+definition updates without requiring a full subgraph resync.
