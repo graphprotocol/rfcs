@@ -155,11 +155,6 @@ const resolvers = {
       // config generator functions
       const { ethereum, ipfs } = context.graph.config
 
-      // Fetch datasource addresses & abis
-      const { MyContract } = context.graph.datasources
-      await MyContract.abi
-      await MyContract.address
-
       // Modify a state object, which relays updates back
       // to the subscribed dApp
       const { state } = context.graph
