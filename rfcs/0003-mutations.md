@@ -263,22 +263,22 @@ const [exec, { loading, state }] = useMutation(
 )
 
 // Optimistic responses can be used to update
-// the UI before the execution has finished
+// the UI before the execution has finished.
+// More information can be found here:
+// https://www.apollographql.com/docs/react/performance/optimistic-ui/
 const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
     optimisticResponse: {
-      myEntity: {
-        id: "...",
+      __typename: "Mutation",
+      createEntity: {
+        __typename: "MyEntity",
         name: "...",
         value: 5,
+        // NOTE: ID must be known so the
+        // final response can be correlated
+        id: "id"
       }
-    },
-    update(proxy, { data }) {
-      // result = data.myEntity
-    },
-    onError(error) {
-      ...
     },
     variables: {
       options: { name: "...", value: 5 }
