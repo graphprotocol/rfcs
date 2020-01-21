@@ -219,7 +219,7 @@ const mutations = createMutations({
   }
 })
 
-// Create an Apollo Links
+// Create Apollo links to handle queries and mutation queries
 const mutationLink = createMutationLink({ mutations })
 const queryLink = createHttpLink({
   uri: "http://localhost:5001/subgraphs/name/my-subgraph"
