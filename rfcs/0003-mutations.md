@@ -204,8 +204,6 @@ const myMutations = require("mutations-js-module")
 
 const mutations = createMutations({
   mutations: myMutations,
-  subgraph: "my-subgraph",
-  node: "http://localhost:8080",
   // Config values, which will be passed to the generators
   config: {
     ethereum: async () => {
