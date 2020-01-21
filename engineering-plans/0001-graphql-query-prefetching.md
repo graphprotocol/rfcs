@@ -72,43 +72,23 @@ be applied to each parent individually by ranking the children for each
 parent according to the order defined by the `children` query. If the same
 child matches multiple parents, we need to make sure that it is considered
 separately for each parent as it might appear at different ranks for
-different parents. In SQL, we use the `rank()` window function for this:
+different parents. In SQL, we use a lateral join,  essentially a for
+loop. For children that store the id of their parent in `parent_id`, we'd
+run the following query:
 
 ```sql
-select *
-  from (
-    select c.*,
-           rank() over (partition by parent_id order by ...) as pos
-      from (query to get children) c)
- where pos >= skip and pos < skip + first
+select c.*, p.id
+  from unnest({parent_ids}) as p(id)
+        cross join lateral
+         (select *
+            from children c
+           where c.parent_id = p.id
+             and .. other conditions on c ..
+           order by c.{sort_key}
+           limit {first}
+          offset {skip}) c
+ order by c.{sort_key}
 ```
-
-### Handling interfaces
-
-If `parents` or `children` (or both) are interfaces, we resolve the
-interfaces into the concrete types implementing them, produce a query for
-each combination of parent/child concrete type and combine those queries
-via `union all`.
-
-Since implementations of the same interface will generally differ in the schema
-they use, we can not form a `union all` of all the data in the tables for
-these concrete types, but have to first query only attributes that we know
-will be common to all entities implementing the interface, most notably the
-`vid` (a unique identifier that identifies the precise version of an
-entity), and then later fill in the details of each entity by converting it
-directly to JSON.
-
-That means that when we deal with children that are an interface, we will
-first select only the following columns (where exactly they come from
-depends on how the parent/child relationship is modeled)
-
-```sql
-select '{__typename}' as entity, c.vid, c.id, parent_id
-```
-
-and form the `union all` of these queries. We then use that union to rank
-children as described above.
-
 
 ### Handling parent/child relationships
 
@@ -124,24 +104,12 @@ field: when the parent field is not derived, we need to use that since that
 is the only place that contains the parent -> child relationship. When the
 parent field is derived, the child field can not be a derived field.
 
-That leaves us with the following combinations of whether the parent and
-child store a list or a scalar value, and whether the parent is derived:
-
-
-For details on the GraphQL schema for each row in this table, see the
+That leaves us with eight combinations of whether the parent
+and child store a list or a scalar value, and whether the parent is
+derived. For details on the GraphQL schema for each row in this table, see the
 section at the end. The `Join cond` indicates how we can find the children
-for a given parent. There are four different join conditions in this table.
-
-When we query children, we need to have the id of the parent that child is
-related to (and list the child multiple times if it is related to multiple
-parents) since that is the field by which we window and rank children.
-
-For join conditions of type C and D, the id of the parent is not stored in
-the child, which means we need to join with the `parents` table.
-
-Let's work out the details of these queries; the implementation uses
-`struct EntityLink` in `graph/src/components/store.rs` to distinguish
-between the different types of joins and queries.
+for a given parent. The table refers to the four different kinds of join
+condition we might need as types A, B, C, and D.
 
 | Case | Parent list? | Parent derived? | Child list? | Join cond                  | Type |
 |------|--------------|-----------------|-------------|----------------------------|------|
@@ -154,14 +122,52 @@ between the different types of joins and queries.
 |    7 | FALSE        | FALSE           | TRUE        | child.id = parent.child    | D    |
 |    8 | FALSE        | FALSE           | FALSE       | child.id = parent.child    | D    |
 
+When we query children, we already have a list of all parents from running
+a previous query. To find the children, we need to have the id of the
+parent that child is related to, and, when the parent stores the ids of its
+children directly (types C and D) the child ids for each parent id.
+
+The query for each type has the shape
+```sql
+select c.*, p.parent_id
+  from {expand_parents}
+       cross join lateral
+       (select *
+          from children c
+         where {linked_children}
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
+```
+
+The `expand_parents` clause expands the list of parent ids (for types A and
+B) or the lists of parent and child ids (for types C and D) into a virtual
+table. The `cross join lateral` then loops over that list and selects the
+`first` matching children for each parent. The `linked_children` clause
+describes how parent and children are linked.
+
 #### Type A
 
-Use when parent is derived and child is a list
+Use when parent is derived and child stores a list of parents
 
 ```sql
-select c.*, parent_id
- from {children} c join lateral unnest(c.{parent_field}) parent_id
-where parent_id = any($parent_ids)
+select c.*, p.id as parent_id
+  from unnest({parent_ids}) as p(id)
+       cross join lateral
+       (select *
+          from children c
+         where p.id = any(c.{parent_field})
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
+```
+
+For this type,
+```sql
+expand_parents  := unnest({parent_ids}) as p(id)
+linked_children := p.id = any(c.{parent_field})
 ```
 
 Data needed to generate:
@@ -175,12 +181,25 @@ The implementation uses a `EntityLink::Direct` for joins of this type.
 
 #### Type B
 
-Use when parent is derived and child is not a list
+Use when parent is derived and child stores a single parent
 
 ```sql
-select c.*, c.{parent_field} as parent_id
- from {children} c
-where c.{parent_field} = any($parent_ids)
+select c.*, p.id as parent_id
+  from unnest({parent_ids}) as p(id)
+       cross join lateral
+       (select *
+          from children c
+         where p.id = c.{parent_field}
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
+```
+
+For this type,
+```sql
+expand_parents  := unnest({parent_ids}) as p(id)
+linked_children := p.id = c.{parent_field}
 ```
 
 Data needed to generate:
@@ -194,24 +213,45 @@ The implementation uses a `EntityLink::Direct` for joins of this type.
 
 #### Type C
 
-Use when parent is a list and not derived
+Use when the parent stores a list of its children.
 
 ```sql
 select c.*, p.id as parent_id
- from {children} c, {parents} p
-where p.id = any($parent_ids)
-  and c.id = any(p.{child_field})
+  from rows from (unnest({parent_ids}), reduce_dim({child_id_matrix}))
+              as p(id, child_ids)
+       cross join lateral
+       (select *
+          from children c
+         where c.id = any(p.child_ids)
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
+```
+
+For this type,
+```sql
+expand_parents  := rows from (unnest({parent_ids}),
+                              reduce_dim({child_id_matrix}))
+                          as p(id, child_ids)
+linked_children := c.id = any(p.child_ids)
 ```
 
 Data needed to generate:
 
 -   children: name of child table
 -   parent_ids: list of parent ids
--   parents: name of parent table
--   child_field: name of child field (array) in parent table
+-   child\_id_matrix: array of arrays where `child_id_matrix[i]` is an array
+    containing the ids of the children for `parent_id[i]`
 
 The implementation uses a `EntityLink::Parent` for joins of this type.
 
+
+Note that `reduce_dim` is a custom function that is not part of [ANSI
+SQL:2016](https://en.wikipedia.org/wiki/SQL:2016) but is needed as there is
+no standard way to decompose a matrix into a table where each row contains
+one row of the matrix. The `ROWS FROM` construct is also not part of ANSI
+SQL.
 
 #### Type D
 
@@ -219,29 +259,59 @@ Use when parent is not a list and not derived
 
 ```sql
 select c.*, p.id as parent_id
- from {children} c, {parents} p
-where p.id = any($parent_ids)
-  and c.id = p.child_field
+  from rows from (unnest({parent_ids}), unnest({child_ids})) as p(id, child_id)
+         cross join lateral
+       (select *
+          from children c
+         where c.id = p.child_id
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
+```
+
+For this type,
+```sql
+expand_parents  := rows from (unnest({parent_ids}), unnest({child_ids}))
+                          as p(id, child_id)
+linked_children := c.id = p.child_id
 ```
 
 Data needed to generate:
 
 -   children: name of child table
 -   parent_ids: list of parent ids
--   parents: name of parent table
--   child_field: name of child field (scalar) in parent table
+-   child_ids: list of the id of the child for each parent such that
+    `child_ids[i]` is the id of the child for `parent_id[i]`
 
 The implementation uses a `EntityLink::Parent` for joins of this type.
 
+The `ROWS FROM` construct is not part of ANSI SQL.
 
-### Putting it all together
+### Handling interfaces
 
-Note that in all of these queries, we ultimately return the typename of
-each entity, together with a JSONB representation of that entity. We do
-this for two reasons: first, because different child tables might have
-different schemas, which precludes us from taking the union of these child
-tables, and second, because Diesel does not let us execute queries where
-the type and number of columns in the result is determined dynamically.
+If the GraphQL type of the children is an interface, we need to take
+special care to form correct queries. Whether the parents are
+implementations of an interface or not does not matter, as we will have a
+full list of parents already loaded into memory when we build the query for
+the children. Whether the GraphQL type of the parents is an interface may
+influence from which parent attribute we get child ids for queries of type
+C and D.
+
+When the GraphQL type of the children is an interface, we resolve the
+interface type into the concrete types implementing it, produce a query for
+each concrete child type and combine those queries via `union all`.
+
+Since implementations of the same interface will generally differ in the
+schema they use, we can not form a `union all` of all the data in the
+tables for these concrete types, but have to first query only attributes
+that we know will be common to all entities implementing the interface,
+most notably the `vid` (a unique identifier that identifies the precise
+version of an entity), and then later fill in the details of each entity by
+converting it directly to JSON. A second reason to pass entities as JSON
+from the database is that it is impossible with Diesel to execute queries
+where the number and types of the columns of the result are not known at
+compile time.
 
 We need to to be careful though to not convert to JSONB too early, as that
 is slow when done for large numbers of rows. Deferring conversion is
@@ -253,58 +323,84 @@ somewhat simpler as the `union all` in the below queries turns into
 an `entity = any(..)` clause with JSONB storage, and because we do not need
 to convert to JSONB data.
 
-Note that for the windowed queries below, the entity we return will have
-`parent_id` and `pos` attributes. The `parent_id` is necessary to attach
-the query result to the right parents we already have in memory. The JSONB
-queries need to somehow insert the `parent_id` field into the JSONB data
-they return.
+That means that when we deal with children that are an interface, we will
+first select only the following columns from each concrete child type
+(where exactly they come from depends on how the parent/child relationship
+is modeled)
 
-In the most general case, we have an `EntityCollection::Window` with
-multiple windows. The query for that case is
+```sql
+select '{__typename}' as entity, c.vid, c.id, c.{sort_key}, p.id as parent_id
+```
+
+and then use that data to fill in the complete details of each concrete
+entity. The overall structure of this query then is
 
 ```sql
 with matches as (
-  -- Limit the matches for each parent
   select c.*
-    from (
-      -- Rank matching children for each parent
-      select c.*,
-             rank() over (partition by c.parent_id order by {query.order}) as pos
-        from (
-          {window.children_uniform(sort_key, block)}
-          union all
-            ... range ober all windows) c) c
-   where c.pos > {skip} and c.pos <= {skip} + {first})
--- Get the full entity for each match
-select m.entity, to_jsonb(c.*) as data, m.parent_id, m.pos
-  from matches m, {window.child_table()} c
- where c.vid = m.vid and m.entity = '{window.child_type}'
+    from unnest({all_parent_ids}) as q(id)
+         cross join lateral
+         (select '{children.object}' as entity, c.vid, c.id,
+                 c.{sort_key}, p.id as parent_id
+            from {expand_parents}
+                 cross join lateral
+                 (select *
+                    from {children.table} c
+                   where {linked_children}
+                     and p.id = q.id
+                     and .. other conditions on c ..)
+                   union all
+                         .. range over all child types ..
+                   order by {sort_key}
+                   limit {first} offset {skip}) c)
+select m.*, to_jsonb(c.*) as data
+  from matchs m, {children.table} c
+ where c.vid = m.vid and m.entity = '{children.object}'
  union all
-       ... range over all windows
- -- Make sure we return the children for each parent in the correct order
- order by parent_id, pos
+       .. range over all child tables ..
+ order by {sort_key}
 ```
+
+The list `all_parent_ids` must contain the ids of all the parents for which
+we want to find children.
+
+We have one `children` object for each concrete GraphQL type that we need
+to query, where `children.table` is the name of the database table in which
+these entities are stored, and `children.object` is the GraphQL typename
+for these children.
+
+The code uses an `EntityCollection::Window` containing multiple
+`EntityWindow` instances to represent the most general form of querying for
+the children of a set of parents, the query given above.
 
 When there is only one window, we can simplify the above query. The
 simplification basically inlines the `matches` CTE. That is important as
 CTE's in Postgres before Postgres 12 are optimization fences, even when
 they are only used once. We therefore reduce the two queries that Postgres
 executes above to one for the fairly common case that the children are not
-an interface.
+an interface. For each type of parent/child relationship, the resulting
+query is essentially the same as the one given in the section
+`Handling parent/child relationships`, except that the `select` clause is
+changed to `select '{window.child_type}' as entity, to_jsonb(c.*) as data`:
 
 ```sql
-select '{window.child_type}' as entity, to_jsonb(c.*) as data
-  from (
-    -- Rank matching children
-    select c.*,
-          rank() over (partition by c.parent_id order by {query.order}) as pos
-     from ({window.children_detailed()}) c) c
- where c.pos >= {window.skip} and c.pos <= {window.skip} + {window.first}
- order by c.parent_id,c.pos
+select '..' as entity, to_jsonb(e.*) as data, p.id as parent_id
+  from {expand_parents}
+       cross join lateral
+       (select *
+          from children c
+         where {linked_children}
+           and .. other conditions on c ..
+         order by c.{sort_key}
+         limit {first} offset {skip}) c
+ order by c.{sort_key}
 ```
-When we do not have to window, but only deal with an
-`EntityCollection::All` with multiple entity types, we can simplify the
-query by avoiding ranking and just using an ordinary `order by` clause:
+
+Toplevel queries, i.e., queries where we have no parents, and therefore do
+not restrict the children we return by parent ids are represented in the
+code by an `EntityCollection::All`. If the GraphQL type of the children is
+an interface with multiple implementers, we can simplify the query by
+avoiding ranking and just using an ordinary `order by` clause:
 
 ```sql
 with matches as (
@@ -325,9 +421,9 @@ select m.entity, to_jsonb(c.*) as data, c.id, c.{sort_key}
      order by c.{sort_key}, c.id
 ```
 
-And finally, for the very common case of a GraphQL query without nested
-children that uses a concrete type, not an interface, we can further
-simplify this, again by essentially inlining the `matches` CTE to:
+And finally, for the very common case of a toplevel GraphQL query for a
+concrete type, not an interface, we can further simplify this, again by
+essentially inlining the `matches` CTE to:
 
 ```sql
 select '{entity_type}' as entity, to_jsonb(c.*) as data
@@ -420,3 +516,9 @@ type Child {
   # doesn't matter
 }
 ```
+
+## Resources
+
+* [PostgreSQL Manual](https://www.postgresql.org/docs/12/index.html)
+* [Browsable SQL Grammar](https://jakewheat.github.io/sql-overview/sql-2016-foundation-grammar.html)
+* [Wikipedia entry on ANSI SQL:2016](https://en.wikipedia.org/wiki/SQL:2016) The actual standard is not freely available
