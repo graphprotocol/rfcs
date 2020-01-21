@@ -197,9 +197,9 @@ export default {
 ```javascript
 const {
   createMutations,
-  createMutationsLink,
-  useMutation
+  createMutationsLink
 } = require("@graphprotocol/mutations-ts")
+const { useMutation } = require("@graphprotocol/mutations-apollo-react")
 const myMutations = require("mutations-js-module")
 
 const mutations = createMutations({
