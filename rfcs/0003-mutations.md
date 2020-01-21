@@ -251,7 +251,9 @@ const CREATE_ENTITY = gql`
   }
 `
 
-// state === mutation state
+// exec: execution function for the mutation query
+// loading: https://www.apollographql.com/docs/react/data/mutations/#tracking-mutation-status
+// state: mutation state instance
 const [exec, { loading, state }] = useMutation(
   CREATE_ENTITY,
   {
