@@ -609,3 +609,12 @@ The existing alternative that protocol developers are creating for dApp develope
 
 - **Should the resolvers module be ES5 compliant?**  
   The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
+
+- **Should the Graph Node's schema introspection endpoint respond with the "full" schema, including the mutations' schema?**
+  Developers could fetch the "full" schema by looking up the subgraph's manifest, read the `mutations.schema.file` hash value, and fetching the full schema from IPFS. Should the graph-node support querying this full schema directly from the graph-node itself through the introspection endpoint?  
+
+- **Will server side execution ever be a reality?**
+  I have not thought of a trustless solution to this, am curious if anyone has any ideas of how we could make this possible.  
+
+- **Will The Graph Explorer support mutations?**
+  We could have the explorer client-side application dynamically fetch and include mutation resolver modules. Configuring the resolvers module dynamically is problematic though. Maybe there are a few known config properties that the explorer client supports, and for all others it allows the user to input config values (if they're base types).  
