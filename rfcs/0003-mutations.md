@@ -158,7 +158,7 @@ type Mutation {
 Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries (ex: Apollo Client). They are executed locally within the client application.
 
 Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript module. This module is expected to have a default export that contains the following properties:
-  * `resolvers` - The mutation resolver functions. The shape of this object must match the shape of the `type Mutation` defined above. See the example below for demonstration of this. Resolvers have the following prototype, [as defined in graphql-js](https://github.com/graphql/graphql-js/blob/9dba58eeb6e28031bec7594b6df34c4fd74459b0/src/type/definition.js#L906):  
+  * `resolvers: MutationResolvers` - The mutation resolver functions. The shape of this object must match the shape of the `type Mutation` defined above. See the example below for demonstration of this. Resolvers have the following prototype, [as defined in graphql-js](https://github.com/graphql/graphql-js/blob/9dba58eeb6e28031bec7594b6df34c4fd74459b0/src/type/definition.js#L906):  
     ```typescript
     type GraphQLFieldResolver<
       TSource,
@@ -177,13 +177,17 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
       };
     }
     ```
-  * `config` - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:
+  * `config: ConfigGenerators` - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:
     ```typescript
-    type ConfigGenerator<TInput, TOutput> = (value: TInput) => TOutput
+    type ConfigGenerator = (value: any) => any
+
+    type ConfigGenerators = {
+      [key: string]: (ConfigGenerator | ConfigGenerators)
+    }
     ```
     See the example below for a demonstration of this.
 
-  * `stateBuilder` (optional) - A state builder interface responsible for (1) initializing ext state properties and (2) reducing ext state events. State builders implement the following interface:  
+  * `stateBuilder: StateBuilder` (optional) - A state builder interface responsible for (1) initializing ext state properties and (2) reducing ext state events. State builders implement the following interface:  
     ```typescript
     type MutationState<TState> = CoreState & TState
     type MutationEvents<TEventMap> = CoreEvents & TEventMap
