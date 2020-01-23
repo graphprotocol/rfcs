@@ -85,6 +85,7 @@ mutations:
     apiVersion: 0.0.1
     kind: javascript/es5
     file: ./mutations/index.js
+    types: ./mutations/index.d.ts
 dataSources: ...
 ...
 ```
@@ -108,7 +109,10 @@ resolvers:
   apiVersion: 0.0.1
   kind: javascript/es5
   file: ./index.js
+  types: ./index.d.ts
 ```
+
+NOTE: `resolvers.types` is optional, and is only required if the resolvers' module exports a state builder. More on this below.
 
 ### Mutations Schema
 
@@ -151,17 +155,99 @@ type Mutation {
 
 ### Mutation Resolvers
 
-Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries. They are executed locally within the client application.
+Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries (ex: Apollo Client). They are executed locally within the client application.
 
 Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript module. This module is expected to have a default export that contains the following properties:
-  * `resolvers` - The mutation resolver functions.
-  * `config` - A collection of config generators.
+  * `resolvers` - The mutation resolver functions. The shape of this object must match the shape of the `type Mutation` defined above. See the example below for demonstration of this. Resolvers have the following prototype, [as defined in graphql-js](https://github.com/graphql/graphql-js/blob/9dba58eeb6e28031bec7594b6df34c4fd74459b0/src/type/definition.js#L906):  
+    ```typescript
+    type GraphQLFieldResolver<
+      TSource,
+      TContext,
+      TArgs = { [argument: string]: any, ... },
+    > = (
+      source: TSource,
+      args: TArgs,
+      context: TContext,
+      info: GraphQLResolveInfo,
+    ) => mixed;
 
+    interface MutationResolvers {
+      Mutation: {
+          [field: string]: GraphQLFieldResolver<any, any>;
+      };
+    }
+    ```
+  * `config` - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:
+    ```typescript
+    type ConfigGenerator<TInput, TOutput> = (value: TInput) => TOutput
+    ```
+    See the example below for a demonstration of this.
+
+  * `stateBuilder` (optional) - A state builder interface responsible for (1) initializing ext state properties and (2) reducing ext state events. State builders implement the following interface:  
+    ```typescript
+    type MutationState<TState> = CoreState & TState
+    type MutationEvents<TEventMap> = CoreEvents & TEventMap
+
+    interface StateBuilder<TState, TEventMap extends EventTypeMap = { }> {
+      getInitialState(uuid: string): TState,
+      // Event Specific Reducers
+      reducers?: {
+        [TEvent in keyof MutationEvents<TEventMap>]?: (
+          state: MutationState<TState>,
+          payload: InferEventPayload<TEvent, TEventMap>
+        ) => Promise<MutationState<TState>>
+      },
+      // Catch-All Reducer
+      reducer?: (
+        state: MutationState<TState>,
+        event: string,
+        payload: any
+      ) => Promise<MutationState<TState>>,
+    }
+
+    interface EventPayload { }
+
+    interface Event {
+      name: string
+      payload: EventPayload
+    }
+
+    interface EventTypeMap {
+      [name: string]: EventPayload
+    }
+
+    type InferEventPayload<
+      TEvent extends keyof TEvents,
+      TEvents extends EventTypeMap
+    > =
+      TEvent extends keyof TEvents ? TEvents[TEvent] :
+      any
+    ```
+    See the example below for a demonstration of this.
+
+For example:  
 `mutations/index.js`
-```javascript
-const resolvers = {
+```typescript
+import gql from "graphql-tag"
+import {
+  ethers,
+  AsyncSendable,
+  Web3Provider
+} from "ethers"
+import IPFS from "ipfs"
+import {
+  MutationResolvers,
+  ConfigGenerators,
+  Event,
+  EventPayload,
+  EventTypeMap,
+  ProgressUpdateEvent
+} from "@graphprotocol/mutations-ts"
+
+/// Mutation Resolvers
+const resolvers: MutationResolvers = {
   Mutation: {
-    async createEntity (_, args, context) {
+    async createEntity (source: any, args: any, context: any) {
       // Extract mutation arguments
       const { name, value } = args.options
 
@@ -169,43 +255,113 @@ const resolvers = {
       // config generator functions
       const { ethereum, ipfs } = context.graph.config
 
-      // Modify a state object, which relays updates back
-      // to the subscribed dApp
+      // Create ethereum transactions...
+      // Fetch & upload to ipfs...
+
+      // Dispatch a state event through the state updater
       const { state } = context.graph
-      state.addTransaction("tx_hash")
+      state.dispatch("PROGRESS_UPDATE", { progress: 0.5 })
+
+      // Dispatch a custom ext event
+      state.dispatch("MY_EVENT", { myValue: "..." })
+
+      // Send another query using the same client.
+      // This query would result in the graph-node's
+      // entity store being fetched from. You could also
+      // execute another mutation here if desired.
+      const { client } = context
+      await client.query({
+        query: gql`
+          myEntity (id: "${id}") {
+            id
+            name
+            value
+          }
+        }`
+      })
 
       ...
     },
-    async setEntityName (_, args, context) {
+    async setEntityName (source: any, args: any, context: any) {
       ...
     }
   }
 }
 
-// Config generators
-const config = {
+/// Config Generators
+const config: ConfigGenerators = {
   // These function arguments are passed in by the dApp
-  ethereum (provider) {
+  ethereum (provider: AsyncSendable): Web3Provider {
     return new ethers.providers.Web3Provider(provider)
   },
-  ipfs (provider) {
+  ipfs (provider: string): IPFS {
     return new IPFS(provider)
   },
-  customProperty (value) {
-    return value + 2
+  // Example of a custom config property
+  property: {
+    // Generators can be nested
+    a: (value: string) => { },
+    b: (value: string) => { }
+  }
+}
+
+/// (optional) Ext State, Events, and State Builder
+
+// Ext State
+interface State {
+  myValue: string
+}
+
+// Ext Events
+interface MyEvent extends EventPayload {
+  myValue: string
+}
+
+interface EventMap extends EventTypeMap {
+  "MY_EVENT": MyEvent
+}
+
+// Ext State Builder
+const stateBuilder: StateBuilder<State, EventMap> = {
+  getInitialState(): State {
+    return {
+      myValue: ""
+    }
   },
-  rootProperty: {
-    nestedProperty (value) {
-      ...
+  reducers: {
+    "MY_EVENT": (state: MutationState<State>, payload: MyEvent) => {
+      return {
+        myValue: payload.myValue
+      }
+    },
+    "PROGRESS_UPDATE": (state: MutationState<State>, payload: ProgressUpdateEvent) => {
+      // Do something custom...
+    }
+  },
+  // Catch-all reducer...
+  reducer: (state: MutationState<State>, event: Event) => {
+    switch (event.name) {
+      case "TRANSACTION_CREATED":
+        // Do something custom...
+        break;
     }
   }
 }
 
 export default {
   resolvers,
-  config
+  config,
+  State,
+  MyEvent,
+  EventMap,
+  stateBuilder
 }
 ```
+
+NOTE: If the resolvers module exports a `stateBuilder`, it's expected that the mutations manifest has a `resolvers.types` file defined. The following types are expected to be defined in the .d.ts type definition file:
+  - `State`
+  - `EventMap`
+  - Any `EventPayload` interfaces defined within the `EventMap`
 
 ### dApp Integration
 ```javascript
