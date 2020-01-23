@@ -265,6 +265,9 @@ const resolvers: MutationResolvers = {
       // Dispatch a custom ext event
       state.dispatch("MY_EVENT", { myValue: "..." })
 
+      // Get a copy of the current state
+      const currentState = state.current
+
       // Send another query using the same client.
       // This query would result in the graph-node's
       // entity store being fetched from. You could also
@@ -279,6 +282,11 @@ const resolvers: MutationResolvers = {
           }
         }`
       })
+
+      // Fetch datasource addresses & abis from the subgraph manifest
+      const { MyContract } = context.graph.datasources
+      await MyContract.abi
+      await MyContract.address
 
       ...
     },
@@ -364,37 +372,138 @@ NOTE: If the resolvers module exports a `stateBuilder`, it's expected that the m
   - Any `EventPayload` interfaces defined within the `EventMap`
 
 ### dApp Integration
-```javascript
-const {
+
+In addition to the resolvers module defined above, the dApp has access to a run-time API to help with the instantiation and execution of mutations. This package is called `@graphprotocol/mutations-ts` and is defined like so:
+  - `createMutations` - Create a mutations interface which enables the user to `execute` a mutation query and `configure` the mutation module.  
+    ```typescript
+    interface CreateMutationsOptions<
+      TState,
+      TEventMap extends EventTypeMap,
+      TConfig extends ConfigGenerators
+    > {
+      mutations: MutationsModule<TState, TEventMap>,
+      subgraph: string,
+      node: string,
+      config: ConfigGetters<TConfig>
+      mutationExecutor?: MutationExecutor
+    }
+
+    interface Mutations<TConfig extends ConfigGenerators> {
+      execute: (query: MutationQuery) => Promise<MutationResult>
+      configure: (config: ConfigGetters<TConfig>) => void
+    }
+
+    const createMutations = <
+      TState,
+      TEventMap extends EventTypeMap,
+      TConfig extends ConfigGenerators
+    >(
+      options: CreateMutationsOptions<TState, TEventMap, TConfig>
+    ): Mutations<TConfig> => { ... }
+    ```
+
+  - `createMutationsLink` - wrap the mutations created above in an ApolloLink.  
+    ```typescript
+    const createMutationsLink = <TConfig extends ConfigGenerators>(
+      options: { mutations: Mutations<TConfig> }
+    ): ApolloLink => { ... }
+    ```
+
+For applications using Apollo and React, a run-time API is available which mimics commonly used hooks and components for executing mutations, with the addition of having the mutation state available to the caller. This package is called `@graphprotocol/mutations-apollo-react` and is defined like so:
+  - `useMutation` - see https://www.apollographql.com/docs/react/data/mutations/#executing-a-mutation
+    ```typescript
+    import { DocumentNode } from "graphql"
+    import {
+      ExecutionResult,
+      MutationFunctionOptions,
+      MutationResult,
+      OperationVariables
+    } from "@apollo/react-common"
+    import { MutationHookOptions } from "@apollo/react-hooks"
+    import { CoreState } from "@graphprotocol/mutations-ts"
+
+    interface MutationResultWithState<TState, TData = any> extends MutationResult<TData> {
+      state: TState
+    }
+
+    type MutationTupleWithState<TState, TData, TVariables> = [
+      (
+        options?: MutationFunctionOptions<TData, TVariables>
+      ) => Promise<ExecutionResult<TData>>,
+      MutationResultWithState<TState, TData>
+    ];
+
+    const useMutation = <
+      TState = CoreState,
+      TData = any,
+      TVariables = OperationVariables
+    >(
+      mutation: DocumentNode,
+      mutationOptions: MutationHookOptions<TData, TVariables>
+    ): MutationTupleWithState<TState, TData, TVariables> => { ... }
+    ```
+  - `Mutation` - see https://www.howtographql.com/react-apollo/3-mutations-creating-links/
+    ```typescript
+    interface MutationComponentOptions<
+      TData = any,
+      TVariables = OperationVariables
+    > extends BaseMutationOptions<TData, TVariables> {
+      mutation: DocumentNode
+      children: (
+        mutateFunction: MutationFunction<TData, TVariables>,
+        result: MutationResult<TData>
+      ) => JSX.Element | null
+    }
+
+    const Mutation = <TData = any, TVariables = OperationVariables>(
+      props: MutationComponentOptions<TData, TVariables>
+    ): JSX.Element | null => { ... }
+    ```
+
+For example:  
+`dApp/src/App.tsx`
+```typescript
+import {
   createMutations,
-  createMutationsLink
-} = require("@graphprotocol/mutations-ts")
-const { useMutation } = require("@graphprotocol/mutations-apollo-react")
-const myMutations = require("mutations-js-module")
+  createMutationsLink,
+  MutationState
+} from "@graphprotocol/mutations-ts"
+import {
+  Mutation,
+  useMutation
+} from "@graphprotocol/mutations-apollo-react"
+import myMutations, { State } from "mutations-js-module"
+import { createHttpLink } from "apollo-link-http"
 
 const mutations = createMutations({
   mutations: myMutations,
   // Config values, which will be passed to the generators
   config: {
-    ethereum: async () => {
+    // Config values can take the form of functions to allow
+    // for dynamic fetching behavior
+    ethereum: async (): AsyncSendable => {
       const { ethereum } = (window as any)
       await ethereum.enable()
       return ethereum
     },
     ipfs: "http://localhost:5001",
-    customProperty: 5,
-    rootProperty: {
-      nestedProperty: "foo"
+    property: {
+      a: "...",
+      b: "..."
     }
-  }
+  },
+  subgraph: "my-subgraph",
+  node: "http://localhost:8080"
 })
 
 // Create Apollo links to handle queries and mutation queries
 const mutationLink = createMutationLink({ mutations })
 const queryLink = createHttpLink({
-  uri: "http://localhost:5001/subgraphs/name/my-subgraph"
+  uri: "http://localhost:8080/subgraphs/name/my-subgraph"
 })
 
+// Create a root ApolloLink which splits queries between
+// the two different operation links (query & mutation)
 const link = split(
   ({ query }) => {
     const node = getMainDefinition(query);
@@ -403,9 +512,9 @@ const link = split(
   },
   mutationLink,
   queryLink
-);
+)
 
-// Create Apollo Client
+// Create an Apollo Client
 const client = new ApolloClient({
   link,
   cache: new InMemoryCache()
@@ -424,7 +533,7 @@ const CREATE_ENTITY = gql`
 // exec: execution function for the mutation query
 // loading: https://www.apollographql.com/docs/react/data/mutations/#tracking-mutation-status
 // state: mutation state instance
-const [exec, { loading, state }] = useMutation(
+const [exec, { loading, state }] = useMutation<MutationState<State>>(
   CREATE_ENTITY,
   {
     client,
@@ -458,6 +567,15 @@ const [exec, { loading, state }] = useMutation(
   }
 )
 ```
+```html
+// Use the Mutation JSX Component
+<Mutation mutation={CREATE_ENTITY} variables={{options: { name: "...", value: 5 }}}>
+{(exec, { loading, state }) => (
+  <button onClick={exec} />
+)}
+</Mutation>
+```
+
 
 ## Compatibility
 
