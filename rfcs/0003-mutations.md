@@ -48,7 +48,7 @@ This is urgent from a developer experience point of view. With this addition, it
 * _Mutation State_: The state of a mutation being executed. Also referred to in this document as "_State_". It is an aggregate of the core & ext states (see below). dApp developers can subscribe to the mutation's state upon execution of the mutation query. See the `useMutation` examples below.  
 * _Core State_: Default properties present within every mutation state. Some examples: `events: Event[]`, `uuid: string`, and `progress: number`.  
 * _Ext State_: Properties the mutation developer defines. These are added alongside the core state properties in the mutation state. There are no bounds to what a developer can define here. See examples below.  
-* _State Events_: Events emitted by mutation resolvers. Also referred to in this document as "_Events_". Events are defined by a `key: string` and a `payload: any`. These events, once emitted, are given to reducer functions which then update the state accordingly.  
+* _State Events_: Events emitted by mutation resolvers. Also referred to in this document as "_Events_". Events are defined by a `name: string` and a `payload: any`. These events, once emitted, are given to reducer functions which then update the state accordingly.  
 * _Core Events_: Default events available to all mutations. Some examples: `PROGRESS_UPDATE`, `TRANSACTION_CREATED`, `TRANSACTION_COMPLETED`.  
 * _Ext Events_: Events the mutation developer defines. See examples below.  
 * _State Reducers_: A collection of state reducer functions.  
@@ -182,7 +182,7 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
     type ConfigGenerator = (value: any) => any
 
     type ConfigGenerators = {
-      [key: string]: (ConfigGenerator | ConfigGenerators)
+      [prop: string]: (ConfigGenerator | ConfigGenerators)
     }
     ```
     See the example below for a demonstration of this.
