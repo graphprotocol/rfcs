@@ -601,5 +601,8 @@ The existing alternative that protocol developers are creating for dApp develope
 - **How can dApps understand what steps a given mutation will take during the course of its execution?**
   dApps may way to present to the user friendly progress updates, letting them know a given action is 3/4 of the way through execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. More research will be done, and a potential solution to solve both of these use cases will be presented at a later date.
 
+- **Should dApps be able to define event handlers for mutation events?**
+  dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different form the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.
+
 - **Should the resolvers module be ES5 compliant?**  
   The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
