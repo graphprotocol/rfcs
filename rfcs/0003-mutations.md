@@ -264,10 +264,10 @@ const resolvers: MutationResolvers = {
 
       // Dispatch a state event through the state updater
       const { state } = context.graph
-      state.dispatch("PROGRESS_UPDATE", { progress: 0.5 })
+      await state.dispatch("PROGRESS_UPDATE", { progress: 0.5 })
 
       // Dispatch a custom ext event
-      state.dispatch("MY_EVENT", { myValue: "..." })
+      await state.dispatch("MY_EVENT", { myValue: "..." })
 
       // Get a copy of the current state
       const currentState = state.current
