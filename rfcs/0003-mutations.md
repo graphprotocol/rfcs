@@ -27,7 +27,7 @@ GraphQL mutations allow developers to add executable functions to their schema. 
 
 ## Goals & Motivation
 
-The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications ontop of complex protocols. Since dApps have two primary interactions with web3 protocols (reading & writing), the next logical addition is write support.
+The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications on top of complex protocols. Since dApps have two primary interactions with web3 protocols (reading & writing), the next logical addition is write support.
 
 Protocol developers that use a subgraph still often publish a Javascript wrapper library for their dApp developers (examples: [DAOstack](https://github.com/daostack/client), [ENS](https://github.com/ensdomains/ensjs), [LivePeer](https://github.com/livepeer/livepeerjs/tree/master/packages/sdk), [DAI](https://github.com/makerdao/dai.js/tree/dev/packages/dai), [Uniswap](https://github.com/Uniswap/uniswap-sdk)). This is done to help speed up dApp development and promote consistency with protocol usage patterns. With the addition of mutations to the Graph Protocol's GraphQL tooling, Web3 reading & writing can now both be invoked through GraphQL queries. dApp developers can now simply refer to a single GraphQL schema that defines the entire protocol.
 
@@ -39,13 +39,27 @@ This is urgent from a developer experience point of view. With this addition, it
 
 * _Mutations_: Collection of mutations.  
 * _Mutation_: A GraphQL mutation.  
-* _Mutations Schema_: A GraphQL schema that defines a `type Mutation` that contains all mutations. Additionally, this schema can define other types to be used by the mutations, such as `input` and `interface` types.  
-* _Mutations Manifest_: A YAML manifest file that is used to add mutations to an existing subgraph manifest.  
+* _Mutations Schema_: A GraphQL schema that defines a `type Mutation`, which contains all mutations. Additionally this schema can define other types to be used by the mutations, such as `input` and `interface` types.  
+* _Mutations Manifest_: A YAML manifest file that is used to add mutations to an existing subgraph manifest. This manifest can be stored in an external YAML file, or within the subgraph manifest's YAML file under the `mutations` property.  
 * _Mutation Resolvers_: Code module that contains all resolvers.  
-* _Resolver_: Function that is used to execute a mutation.  
-* _Mutation State_: The state of a mutation being executed. It's passed to the resolver through the mutation context.  
-* _Mutation Context_: A context object that's created for every mutation that's executed. It's passed as an argument to the resolver.  
-* _Config_: Collection of config properties required by the mutation resolvers.  
+* _Resolver_: Function that is used to execute a mutation's logic.  
+* _Mutation Context_: A context object that's created for every mutation that's executed. It's passed as the 3rd argument to the resolver function.  
+* _Mutation States_: A collection of mutation states. One is created for each mutation being executed in a given query.  
+* _Mutation State_: The state of a mutation being executed. Also referred to in this document as "_State_". It is an aggregate of the core & ext states (see below). dApp developers can subscribe to the mutation's state upon execution of the mutation query. See the `useMutation` examples below.  
+* _Core State_: Default properties present within every mutation state. Some examples: `events: Event[]`, `uuid: string`, and `progress: number`.  
+* _Ext State_: Properties the mutation developer defines. These are added alongside the core state properties in the mutation state. There are no bounds to what a developer can define here. See examples below.  
+* _State Events_: Events emitted by mutation resolvers. Also referred to in this document as "_Events_". Events are defined by a `key: string` and a `payload: any`. These events, once emitted, are given to reducer functions which then update the state accordingly.  
+* _Core Events_: Default events available to all mutations. Some examples: `PROGRESS_UPDATE`, `TRANSACTION_CREATED`, `TRANSACTION_COMPLETED`.  
+* _Ext Events_: Events the mutation developer defines. See examples below.  
+* _State Reducers_: A collection of state reducer functions.  
+* _State Reducer_: Reducers are responsible for translating events into state updates. They take the form of a function that has the inputs [event, current state], and returns the new state post-event. Also referred to in this document as "_Reducer(s)_".  
+* _Core Reducers_: Default reducers that handle the processing of the core events.  
+* _Ext Reducers_: Reducers the mutation developer defines. These reducers can be defined for any event, core or ext. The core & ext reducers are run one after another if both are defined for a given core event. See examples below.  
+* _State Updater_: The state updater object is used by the resolvers to dispatch events. It's passed to the resolvers through the mutation context like so: `context.graph.state`.
+* _State Builder_: An object responsible for (1) initializing the state with initial values and (2) defining reducers for events.  
+* _Core State Builder_: A state builder that's defined by default. It's responsible for initializing the core state properties, and processing the core events with its reducers.  
+* _Ext State Builder_: A state builder defined by the mutation developer. It's responsible for initializing the ext state properties, and processing the ext events with its reducers.  
+* _Mutations Config_: Collection of config properties required by the mutation resolvers. Also referred to in this document as "_Config_". All resolvers share the same config. It's passed to the resolver through the mutation context like so: `context.graph.config`.  
 * _Config Property_: A single property within the config (ex: ipfs, ethereum, etc).  
 * _Config Generator_: A function that takes a config value, and returns a config property. For example, "localhost:5001" as a config value gets turned into a new IPFS client by the config generator.
 * _Config Value_: An initialization value that's passed into the config generator. This config value is provided by the dApp developer.
@@ -53,7 +67,7 @@ This is urgent from a developer experience point of view. With this addition, it
 
 ## Detailed Design
 
-The sections below illustrate how a developer would add mutations to an existing subgraph, and then add those mutations to a dApp.
+The sections below illustrate how a developer would add mutations to an existing subgraph, and then add those mutations to a dApp.  
 
 ### Mutations Manifest
 
