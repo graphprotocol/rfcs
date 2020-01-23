@@ -363,10 +363,13 @@ const stateBuilder: StateBuilder<State, EventMap> = {
 export default {
   resolvers,
   config,
-  State,
-  MyEvent,
-  EventMap,
   stateBuilder
+}
+
+export {
+  State,
+  EventMap,
+  MyEvent
 }
 ```
 
