@@ -583,7 +583,7 @@ No breaking changes will be introduced, as mutations are an optional add-on to a
 
 ## Drawbacks and Risks
 
-I have some thoughts but they are rather verbose and tangential. Would love some feedback on this from others first.
+Nothing apparent at the moment.
 
 ## Alternatives
 
@@ -591,10 +591,11 @@ The existing alternative that protocol developers are creating for dApp develope
 
 ## Open Questions
 
+- **How can mutations pickup where they left off in the event of an abrupt application shutdown?**
+  Since mutations can contain many different steps internally, it would be ideal to be able to support continuing resolver execution in the event the dApp abruptly shuts down.
+
+- **How can dApps understand what steps a given mutation will take during the course of its execution?**
+  dApps may way to present to the user friendly progress updates, letting them know a given action is 3/4 of the way through execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. More research will be done, and a potential solution to solve both of these use cases will be presented at a later date.
+
 - **Should the resolvers module be ES5 compliant?**  
   The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
-
-- **What paradigm should the mutation state follow?**  
-  One option is to have the resolver's call into a single interface that modifies the backing data. Whenever this data is modified, the entirety of it is passed to the dApp. The downside here is that the dApp doesn't know what has changed within the data, and is forced to represent it in its entirety in order to not miss anything.  
-
-  Another option is to implement something similar to Redux, where the resolvers fire off events with corresponding payloads of data. These events map to reducers, which take in this payload of data and decide what to do with it. The dApp could implement these reducers, and choose how it would want to react to the various events.
