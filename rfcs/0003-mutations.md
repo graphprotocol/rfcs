@@ -246,7 +246,7 @@ import {
   EventPayload,
   EventTypeMap,
   ProgressUpdateEvent
-} from "@graphprotocol/mutations-ts"
+} from "@graphprotocol/mutations"
 
 /// Mutation Resolvers
 const resolvers: MutationResolvers = {
@@ -380,7 +380,7 @@ NOTE: If the resolvers module exports a `stateBuilder`, it's expected that the m
 
 ### dApp Integration
 
-In addition to the resolvers module defined above, the dApp has access to a run-time API to help with the instantiation and execution of mutations. This package is called `@graphprotocol/mutations-ts` and is defined like so:
+In addition to the resolvers module defined above, the dApp has access to a run-time API to help with the instantiation and execution of mutations. This package is called `@graphprotocol/mutations` and is defined like so:
   - `createMutations` - Create a mutations interface which enables the user to `execute` a mutation query and `configure` the mutation module.  
     ```typescript
     interface CreateMutationsOptions<
@@ -427,7 +427,7 @@ For applications using Apollo and React, a run-time API is available which mimic
       OperationVariables
     } from "@apollo/react-common"
     import { MutationHookOptions } from "@apollo/react-hooks"
-    import { CoreState } from "@graphprotocol/mutations-ts"
+    import { CoreState } from "@graphprotocol/mutations"
 
     interface MutationResultWithState<TState, TData = any> extends MutationResult<TData> {
       state: TState
@@ -474,7 +474,7 @@ import {
   createMutations,
   createMutationsLink,
   MutationState
-} from "@graphprotocol/mutations-ts"
+} from "@graphprotocol/mutations"
 import {
   Mutation,
   useMutation
