@@ -204,8 +204,7 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
       // Catch-All Reducer
       reducer?: (
         state: MutationState<TState>,
-        event: string,
-        payload: any
+        event: Event
       ) => Promise<MutationState<TState>>,
     }
 
