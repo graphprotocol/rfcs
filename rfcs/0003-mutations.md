@@ -113,7 +113,7 @@ resolvers:
   types: ./index.d.ts
 ```
 
-NOTE: `resolvers.types` is optional, and is only required if the resolvers' module exports a state builder. More on this below.
+NOTE: `resolvers.types` is optional, and is only required if the resolvers module exports a state builder. More on this below.
 
 ### Mutations Schema
 
