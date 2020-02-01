@@ -61,8 +61,8 @@ This is urgent from a developer experience point of view. With this addition, it
 * _Ext State Builder_: A state builder defined by the mutation developer. It's responsible for initializing the ext state properties, and processing the ext events with its reducers.  
 * _Mutations Config_: Collection of config properties required by the mutation resolvers. Also referred to in this document as "_Config_". All resolvers share the same config. It's passed to the resolver through the mutation context like so: `context.graph.config`.  
 * _Config Property_: A single property within the config (ex: ipfs, ethereum, etc).  
-* _Config Generator_: A function that takes a config value, and returns a config property. For example, "localhost:5001" as a config value gets turned into a new IPFS client by the config generator.
-* _Config Value_: An initialization value that's passed into the config generator. This config value is provided by the dApp developer.
+* _Config Generator_: A function that takes a config argument, and returns a config property. For example, "localhost:5001" as a config argument gets turned into a new IPFS client by the config generator.
+* _Config Argument_: An initialization argument that's passed into the config generator function. This config argument is provided by the dApp developer.
 * _Optimistic Response_: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.  
 
 ## Detailed Design
@@ -102,6 +102,7 @@ dataSources: ...
 ```
 `mutations/mutations.yaml`
 ```yaml
+specVersion: ...
 repository: https://npmjs.com/package/...
 schema:
   file: ./schema.graphql
@@ -179,10 +180,10 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
     ```
   * `config: ConfigGenerators` - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:
     ```typescript
-    type ConfigGenerator = (value: any) => any
+    type ConfigGenerator<TArg, TRet> = (arg: TArg) => TRet
 
     type ConfigGenerators = {
-      [prop: string]: (ConfigGenerator | ConfigGenerators)
+      [prop: string]: ConfigGenerator<any, any> | ConfigGenerators
     }
     ```
     See the example below for a demonstration of this.
@@ -302,17 +303,17 @@ const resolvers: MutationResolvers = {
 /// Config Generators
 const config: ConfigGenerators = {
   // These function arguments are passed in by the dApp
-  ethereum (provider: AsyncSendable): Web3Provider {
-    return new ethers.providers.Web3Provider(provider)
+  ethereum (arg: AsyncSendable): Web3Provider {
+    return new ethers.providers.Web3Provider(arg)
   },
-  ipfs (provider: string): IPFS {
-    return new IPFS(provider)
+  ipfs (arg: string): IPFS {
+    return new IPFS(arg)
   },
   // Example of a custom config property
   property: {
     // Generators can be nested
-    a: (value: string) => { },
-    b: (value: string) => { }
+    a: (arg: string) => { },
+    b: (arg: string) => { }
   }
 }
 
@@ -483,9 +484,9 @@ import { createHttpLink } from "apollo-link-http"
 
 const mutations = createMutations({
   mutations: myMutations,
-  // Config values, which will be passed to the generators
+  // Config args, which will be passed to the generators
   config: {
-    // Config values can take the form of functions to allow
+    // Config args can take the form of functions to allow
     // for dynamic fetching behavior
     ethereum: async (): AsyncSendable => {
       const { ethereum } = (window as any)
@@ -616,4 +617,4 @@ The existing alternative that protocol developers are creating for dApp develope
   I have not thought of a trustless solution to this, am curious if anyone has any ideas of how we could make this possible.  
 
 - **Will The Graph Explorer support mutations?**
-  We could have the explorer client-side application dynamically fetch and include mutation resolver modules. Configuring the resolvers module dynamically is problematic though. Maybe there are a few known config properties that the explorer client supports, and for all others it allows the user to input config values (if they're base types).  
+  We could have the explorer client-side application dynamically fetch and include mutation resolver modules. Configuring the resolvers module dynamically is problematic though. Maybe there are a few known config properties that the explorer client supports, and for all others it allows the user to input config arguments (if they're base types).  
