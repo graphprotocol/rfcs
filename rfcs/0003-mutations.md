@@ -603,7 +603,20 @@ The existing alternative that protocol developers are creating for dApp develope
   Since mutations can contain many different steps internally, it would be ideal to be able to support continuing resolver execution in the event the dApp abruptly shuts down.
 
 - **How can dApps understand what steps a given mutation will take during the course of its execution?**
-  dApps may want to present to the user friendly progress updates, letting them know a given mutation is 3/4ths of the way through its execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. More research will be done, and a potential solution to solve both of these use cases will be presented at a later date.
+  dApps may want to present to the user friendly progress updates, letting them know a given mutation is 3/4ths of the way through its execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. A potential implementation could include adding a `steps: Step[]` property to the core state, where `Step` looks similar to:
+  ```typescript
+  interface Step {
+    id: string
+    title: string
+    description: string
+    status: 'pending' | 'processing' | 'error' | 'finished'
+    current: boolean
+    error?: Error
+    data: any
+  }
+  ```
+
+  This, plus a few core events & reducers, would be all we need to render UIs like the ones seen here: https://ant.design/components/steps/
 
 - **Should dApps be able to define event handlers for mutation events?**
   dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different from the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.
