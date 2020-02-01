@@ -163,6 +163,19 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
     ```typescript
     import { GraphQLFieldResolver } from 'graphql'
 
+    interface MutationContext<
+      TConfig extends ConfigGenerators,
+      TState,
+      TEventMap extends EventTypeMap
+    > {
+      [prop: string]: any,
+      graph: {
+        config: ConfigProperties<TConfig>,
+        dataSources: DataSources,
+        state: StateUpdater<TState, TEventMap>
+      }
+    }
+
     interface MutationResolvers<
       TConfig extends ConfigGenerators,
       TState,
