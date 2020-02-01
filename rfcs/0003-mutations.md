@@ -370,7 +370,7 @@ const stateBuilder: StateBuilder<State, EventMap> = {
     switch (event.name) {
       case "TRANSACTION_CREATED":
         // Do something custom...
-        break;
+        break
     }
   }
 }
@@ -453,8 +453,12 @@ For applications using Apollo and React, a run-time API is available which mimic
     import { MutationHookOptions } from "@apollo/react-hooks"
     import { CoreState } from "@graphprotocol/mutations"
 
+    type MutationStates<TState> = {
+      [mutation: string]: MutationState<TState>
+    }
+
     interface MutationResultWithState<TState, TData = any> extends MutationResult<TData> {
-      state: TState
+      state: MutationStates<TState>
     }
 
     type MutationTupleWithState<TState, TData, TVariables> = [
@@ -462,7 +466,7 @@ For applications using Apollo and React, a run-time API is available which mimic
         options?: MutationFunctionOptions<TData, TVariables>
       ) => Promise<ExecutionResult<TData>>,
       MutationResultWithState<TState, TData>
-    ];
+    ]
 
     const useMutation = <
       TState = CoreState,
@@ -480,12 +484,12 @@ For applications using Apollo and React, a run-time API is available which mimic
       TData,
       TVariables
     > extends BaseMutationOptions<TData, TVariables> {
-      mutation: DocumentNode;
+      mutation: DocumentNode
       options: MutationHookOptions
       children: (
         mutateFunction: MutationFunction<TData, TVariables>,
         result: MutationResultWithState<TState, TData>
-      ) => JSX.Element | null;
+      ) => JSX.Element | null
     }
 
     const Mutation = <
@@ -502,8 +506,7 @@ For example:
 ```typescript
 import {
   createMutations,
-  createMutationsLink,
-  MutationState
+  createMutationsLink
 } from "@graphprotocol/mutations"
 import {
   Mutation,
@@ -543,7 +546,7 @@ const queryLink = createHttpLink({
 // the two different operation links (query & mutation)
 const link = split(
   ({ query }) => {
-    const node = getMainDefinition(query);
+    const node = getMainDefinition(query)
     return node.kind === "OperationDefinition" &&
            node.operation === "mutation"
   },
@@ -570,7 +573,7 @@ const CREATE_ENTITY = gql`
 // exec: execution function for the mutation query
 // loading: https://www.apollographql.com/docs/react/data/mutations/#tracking-mutation-status
 // state: mutation state instance
-const [exec, { loading, state }] = useMutation<MutationState<State>>(
+const [exec, { loading, state }] = useMutation<State>(
   CREATE_ENTITY,
   {
     client,
@@ -579,6 +582,9 @@ const [exec, { loading, state }] = useMutation<MutationState<State>>(
     }
   }
 )
+
+// Access the mutation's state like so:
+state.createEntity.myValue
 
 // Optimistic responses can be used to update
 // the UI before the execution has finished.
