@@ -606,7 +606,7 @@ The existing alternative that protocol developers are creating for dApp develope
   dApps may want to present to the user friendly progress updates, letting them know a given mutation is 3/4ths of the way through its execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. More research will be done, and a potential solution to solve both of these use cases will be presented at a later date.
 
 - **Should dApps be able to define event handlers for mutation events?**
-  dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different form the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.
+  dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different from the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.
 
 - **Should the Graph Node's schema introspection endpoint respond with the "full" schema, including the mutations' schema?**
   Developers could fetch the "full" schema by looking up the subgraph's manifest, read the `mutations.schema.file` hash value, and fetching the full schema from IPFS. Should the graph-node support querying this full schema directly from the graph-node itself through the introspection endpoint?  
