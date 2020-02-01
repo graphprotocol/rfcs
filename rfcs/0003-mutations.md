@@ -387,35 +387,43 @@ In addition to the resolvers module defined above, the dApp has access to a run-
   - `createMutations` - Create a mutations interface which enables the user to `execute` a mutation query and `configure` the mutation module.  
     ```typescript
     interface CreateMutationsOptions<
+      TConfig extends ConfigGenerators,
       TState,
-      TEventMap extends EventTypeMap,
-      TConfig extends ConfigGenerators
+      TEventMap extends EventTypeMap
     > {
-      mutations: MutationsModule<TState, TEventMap>,
+      mutations: MutationsModule<TConfig, TState, TEventMap>,
       subgraph: string,
       node: string,
-      config: ConfigGetters<TConfig>
-      mutationExecutor?: MutationExecutor
+      config: ConfigArguments<TConfig>
+      mutationExecutor?: MutationExecutor<TConfig, TState, TEventMap>
     }
 
-    interface Mutations<TConfig extends ConfigGenerators> {
-      execute: (query: MutationQuery) => Promise<MutationResult>
-      configure: (config: ConfigGetters<TConfig>) => void
+    interface Mutations<
+      TConfig extends ConfigGenerators,
+      TState,
+      TEventMap extends EventTypeMap
+    > {
+      execute: (query: MutationQuery<TConfig, TState, TEventMap>) => Promise<MutationResult>
+      configure: (config: ConfigArguments<TConfig>) => void
     }
 
     const createMutations = <
-      TState,
-      TEventMap extends EventTypeMap,
-      TConfig extends ConfigGenerators
+      TConfig extends ConfigGenerators,
+      TState = CoreState,
+      TEventMap extends EventTypeMap = { },
     >(
-      options: CreateMutationsOptions<TState, TEventMap, TConfig>
-    ): Mutations<TConfig> => { ... }
+      options: CreateMutationsOptions<TConfig, TState, TEventMap>
+    ): Mutations<TConfig, TState, TEventMap> => { ... }
     ```
 
   - `createMutationsLink` - wrap the mutations created above in an ApolloLink.  
     ```typescript
-    const createMutationsLink = <TConfig extends ConfigGenerators>(
-      options: { mutations: Mutations<TConfig> }
+    const createMutationsLink = <
+      TConfig extends ConfigGenerators,
+      TState,
+      TEventMap extends EventTypeMap,
+    > (
+      { mutations }: { mutations: Mutations<TConfig, TState, TEventMap> }
     ): ApolloLink => { ... }
     ```
 
