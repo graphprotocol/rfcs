@@ -113,7 +113,7 @@ resolvers:
   types: ./index.d.ts
 ```
 
-NOTE: `resolvers.types` is optional, and is only required if the resolvers module exports a state builder. More on this below.
+NOTE: `resolvers.types` is required. More on this below.
 
 ### Mutations Schema
 
@@ -383,13 +383,15 @@ export default {
 
 // Required Types
 export {
+  Config,
   State,
   EventMap,
   MyEvent
 }
 ```
 
-NOTE: If the resolvers module exports a `stateBuilder`, it's expected that the mutations manifest has a `resolvers.types` file defined. The following types are expected to be defined in the .d.ts type definition file:
+NOTE: It's expected that the mutations manifest has a `resolvers.types` file defined. The following types must be defined in the .d.ts type definition file:
+  - `Config`
   - `State`
   - `EventMap`
   - Any `EventPayload` interfaces defined within the `EventMap`
