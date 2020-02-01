@@ -446,19 +446,25 @@ For applications using Apollo and React, a run-time API is available which mimic
     ```
   - `Mutation` - see https://www.howtographql.com/react-apollo/3-mutations-creating-links/
     ```typescript
-    interface MutationComponentOptions<
-      TData = any,
-      TVariables = OperationVariables
+    interface MutationComponentOptionsWithState<
+      TState,
+      TData,
+      TVariables
     > extends BaseMutationOptions<TData, TVariables> {
-      mutation: DocumentNode
+      mutation: DocumentNode;
+      options: MutationHookOptions
       children: (
         mutateFunction: MutationFunction<TData, TVariables>,
-        result: MutationResult<TData>
-      ) => JSX.Element | null
+        result: MutationResultWithState<TState, TData>
+      ) => JSX.Element | null;
     }
 
-    const Mutation = <TData = any, TVariables = OperationVariables>(
-      props: MutationComponentOptions<TData, TVariables>
+    const Mutation = <
+      TState = CoreState,
+      TData = any,
+      TVariables = OperationVariables
+    >(
+      props: MutationComponentOptionsWithState<TState, TData, TVariables>
     ): JSX.Element | null => { ... }
     ```
 
