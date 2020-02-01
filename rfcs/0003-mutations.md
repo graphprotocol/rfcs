@@ -600,7 +600,8 @@ const [exec, { loading, state }] = useMutation(
         name: "...",
         value: 5,
         // NOTE: ID must be known so the
-        // final response can be correlated
+        // final response can be correlated.
+        // Please refer to Apollo's docs.
         id: "id"
       }
     },
