@@ -287,11 +287,6 @@ const resolvers: MutationResolvers = {
         }`
       })
 
-      // Fetch datasource addresses & abis from the subgraph manifest
-      const { MyContract } = context.graph.datasources
-      await MyContract.abi
-      await MyContract.address
-
       ...
     },
     async setEntityName (source: any, args: any, context: any) {
