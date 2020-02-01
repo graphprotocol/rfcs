@@ -485,7 +485,6 @@ For applications using Apollo and React, a run-time API is available which mimic
       TVariables
     > extends BaseMutationOptions<TData, TVariables> {
       mutation: DocumentNode
-      options: MutationHookOptions
       children: (
         mutateFunction: MutationFunction<TData, TVariables>,
         result: MutationResultWithState<TState, TData>
@@ -613,10 +612,13 @@ const [exec, { loading, state }] = useMutation(
 ```
 ```html
 // Use the Mutation JSX Component
-<Mutation mutation={CREATE_ENTITY} variables={{options: { name: "...", value: 5 }}}>
-{(exec, { loading, state }) => (
-  <button onClick={exec} />
-)}
+<Mutation
+  mutation={CREATE_ENTITY}
+  variables={{options: { name: "...", value: 5 }}}
+>
+  {(exec, { loading, state }) => (
+    <button onClick={exec} />
+  )}
 </Mutation>
 ```
 
