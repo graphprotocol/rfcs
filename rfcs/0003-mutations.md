@@ -232,26 +232,31 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
 For example:  
 `mutations/index.js`
 ```typescript
-import gql from "graphql-tag"
 import {
-  ethers,
-  AsyncSendable,
-  Web3Provider
-} from "ethers"
-import IPFS from "ipfs"
-import {
-  MutationResolvers,
-  ConfigGenerators,
   Event,
   EventPayload,
-  EventTypeMap,
+  MutationContext,
+  MutationResolvers,
+  MutationState,
+  StateBuilder,
   ProgressUpdateEvent
 } from "@graphprotocol/mutations"
 
+import gql from "graphql-tag"
+import { ethers } from "ethers"
+import {
+  AsyncSendable,
+  Web3Provider
+} from "ethers/providers"
+import IPFS from "ipfs"
+
+// Typesafe Context
+type Context = MutationContext<Config, State, EventMap>
+
 /// Mutation Resolvers
-const resolvers: MutationResolvers = {
+const resolvers: MutationResolvers<Config, State, EventMap> = {
   Mutation: {
-    async createEntity (source: any, args: any, context: any) {
+    async createEntity (source: any, args: any, context: Context) {
       // Extract mutation arguments
       const { name, value } = args.options
 
@@ -289,19 +294,21 @@ const resolvers: MutationResolvers = {
 
       ...
     },
-    async setEntityName (source: any, args: any, context: any) {
+    async setEntityName (source: any, args: any, context: Context) {
       ...
     }
   }
 }
 
 /// Config Generators
-const config: ConfigGenerators = {
+type Config = typeof config
+
+const config = {
   // These function arguments are passed in by the dApp
-  ethereum (arg: AsyncSendable): Web3Provider {
+  ethereum: (arg: AsyncSendable): Web3Provider => {
     return new ethers.providers.Web3Provider(arg)
   },
-  ipfs (arg: string): IPFS {
+  ipfs: (arg: string): IPFS => {
     return new IPFS(arg)
   },
   // Example of a custom config property
@@ -324,7 +331,7 @@ interface MyEvent extends EventPayload {
   myValue: string
 }
 
-interface EventMap extends EventTypeMap {
+type EventMap = {
   "MY_EVENT": MyEvent
 }
 
@@ -336,7 +343,7 @@ const stateBuilder: StateBuilder<State, EventMap> = {
     }
   },
   reducers: {
-    "MY_EVENT": (state: MutationState<State>, payload: MyEvent) => {
+    "MY_EVENT": async (state: MutationState<State>, payload: MyEvent) => {
       return {
         myValue: payload.myValue
       }
@@ -361,6 +368,7 @@ export default {
   stateBuilder
 }
 
+// Required Types
 export {
   State,
   EventMap,
