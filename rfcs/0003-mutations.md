@@ -45,20 +45,20 @@ This is urgent from a developer experience point of view. With this addition, it
 * _Resolver_: Function that is used to execute a mutation's logic.  
 * _Mutation Context_: A context object that's created for every mutation that's executed. It's passed as the 3rd argument to the resolver function.  
 * _Mutation States_: A collection of mutation states. One is created for each mutation being executed in a given query.  
-* _Mutation State_: The state of a mutation being executed. Also referred to in this document as "_State_". It is an aggregate of the core & ext states (see below). dApp developers can subscribe to the mutation's state upon execution of the mutation query. See the `useMutation` examples below.  
+* _Mutation State_: The state of a mutation being executed. Also referred to in this document as "_State_". It is an aggregate of the core & extended states (see below). dApp developers can subscribe to the mutation's state upon execution of the mutation query. See the `useMutation` examples below.  
 * _Core State_: Default properties present within every mutation state. Some examples: `events: Event[]`, `uuid: string`, and `progress: number`.  
-* _Ext State_: Properties the mutation developer defines. These are added alongside the core state properties in the mutation state. There are no bounds to what a developer can define here. See examples below.  
+* _Extended State_: Properties the mutation developer defines. These are added alongside the core state properties in the mutation state. There are no bounds to what a developer can define here. See examples below.  
 * _State Events_: Events emitted by mutation resolvers. Also referred to in this document as "_Events_". Events are defined by a `name: string` and a `payload: any`. These events, once emitted, are given to reducer functions which then update the state accordingly.  
 * _Core Events_: Default events available to all mutations. Some examples: `PROGRESS_UPDATE`, `TRANSACTION_CREATED`, `TRANSACTION_COMPLETED`.  
-* _Ext Events_: Events the mutation developer defines. See examples below.  
+* _Extended Events_: Events the mutation developer defines. See examples below.  
 * _State Reducers_: A collection of state reducer functions.  
 * _State Reducer_: Reducers are responsible for translating events into state updates. They take the form of a function that has the inputs [event, current state], and returns the new state post-event. Also referred to in this document as "_Reducer(s)_".  
 * _Core Reducers_: Default reducers that handle the processing of the core events.  
-* _Ext Reducers_: Reducers the mutation developer defines. These reducers can be defined for any event, core or ext. The core & ext reducers are run one after another if both are defined for a given core event. See examples below.  
+* _Extended Reducers_: Reducers the mutation developer defines. These reducers can be defined for any event, core or extended. The core & extended reducers are run one after another if both are defined for a given core event. See examples below.  
 * _State Updater_: The state updater object is used by the resolvers to dispatch events. It's passed to the resolvers through the mutation context like so: `context.graph.state`.
 * _State Builder_: An object responsible for (1) initializing the state with initial values and (2) defining reducers for events.  
 * _Core State Builder_: A state builder that's defined by default. It's responsible for initializing the core state properties, and processing the core events with its reducers.  
-* _Ext State Builder_: A state builder defined by the mutation developer. It's responsible for initializing the ext state properties, and processing the ext events with its reducers.  
+* _Extended State Builder_: A state builder defined by the mutation developer. It's responsible for initializing the extended state properties, and processing the extended events with its reducers.  
 * _Mutations Config_: Collection of config properties required by the mutation resolvers. Also referred to in this document as "_Config_". All resolvers share the same config. It's passed to the resolver through the mutation context like so: `context.graph.config`.  
 * _Config Property_: A single property within the config (ex: ipfs, ethereum, etc).  
 * _Config Generator_: A function that takes a config argument, and returns a config property. For example, "localhost:5001" as a config argument gets turned into a new IPFS client by the config generator.
@@ -188,7 +188,7 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
     ```
     See the example below for a demonstration of this.
 
-  * `stateBuilder: StateBuilder` (optional) - A state builder interface responsible for (1) initializing ext state properties and (2) reducing ext state events. State builders implement the following interface:  
+  * `stateBuilder: StateBuilder` (optional) - A state builder interface responsible for (1) initializing extended state properties and (2) reducing extended state events. State builders implement the following interface:  
     ```typescript
     type MutationState<TState> = CoreState & TState
     type MutationEvents<TEventMap> = CoreEvents & TEventMap
@@ -266,7 +266,7 @@ const resolvers: MutationResolvers = {
       const { state } = context.graph
       await state.dispatch("PROGRESS_UPDATE", { progress: 0.5 })
 
-      // Dispatch a custom ext event
+      // Dispatch a custom extended event
       await state.dispatch("MY_EVENT", { myValue: "..." })
 
       // Get a copy of the current state
@@ -317,14 +317,14 @@ const config: ConfigGenerators = {
   }
 }
 
-/// (optional) Ext State, Events, and State Builder
+/// (optional) Extended State, Events, and State Builder
 
-// Ext State
+// Extended State
 interface State {
   myValue: string
 }
 
-// Ext Events
+// Extended Events
 interface MyEvent extends EventPayload {
   myValue: string
 }
@@ -333,7 +333,7 @@ interface EventMap extends EventTypeMap {
   "MY_EVENT": MyEvent
 }
 
-// Ext State Builder
+// Extended State Builder
 const stateBuilder: StateBuilder<State, EventMap> = {
   getInitialState(): State {
     return {
