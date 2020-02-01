@@ -161,28 +161,26 @@ Each mutation within the schema must have a corresponding resolver function defi
 Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript module. This module is expected to have a default export that contains the following properties:
   * `resolvers: MutationResolvers` - The mutation resolver functions. The shape of this object must match the shape of the `type Mutation` defined above. See the example below for demonstration of this. Resolvers have the following prototype, [as defined in graphql-js](https://github.com/graphql/graphql-js/blob/9dba58eeb6e28031bec7594b6df34c4fd74459b0/src/type/definition.js#L906):  
     ```typescript
-    type GraphQLFieldResolver<
-      TSource,
-      TContext,
-      TArgs = { [argument: string]: any, ... },
-    > = (
-      source: TSource,
-      args: TArgs,
-      context: TContext,
-      info: GraphQLResolveInfo,
-    ) => mixed;
+    import { GraphQLFieldResolver } from 'graphql'
 
-    interface MutationResolvers {
+    interface MutationResolvers<
+      TConfig extends ConfigGenerators,
+      TState,
+      TEventMap extends EventTypeMap
+    > {
       Mutation: {
-          [field: string]: GraphQLFieldResolver<any, any>;
-      };
+          [field: string]: GraphQLFieldResolver<
+            any,
+            MutationContext<TConfig, TState, TEventMap>
+          >
+      }
     }
     ```
   * `config: ConfigGenerators` - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:
     ```typescript
     type ConfigGenerator<TArg, TRet> = (arg: TArg) => TRet
 
-    type ConfigGenerators = {
+    interface ConfigGenerators {
       [prop: string]: ConfigGenerator<any, any> | ConfigGenerators
     }
     ```
@@ -193,20 +191,20 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
     type MutationState<TState> = CoreState & TState
     type MutationEvents<TEventMap> = CoreEvents & TEventMap
 
-    interface StateBuilder<TState, TEventMap extends EventTypeMap = { }> {
+    interface StateBuilder<TState, TEventMap extends EventTypeMap> {
       getInitialState(uuid: string): TState,
       // Event Specific Reducers
       reducers?: {
         [TEvent in keyof MutationEvents<TEventMap>]?: (
           state: MutationState<TState>,
           payload: InferEventPayload<TEvent, TEventMap>
-        ) => Promise<MutationState<TState>>
+        ) => OptionalAsync<Partial<MutationState<TState>>>
       },
       // Catch-All Reducer
       reducer?: (
         state: MutationState<TState>,
         event: Event
-      ) => Promise<MutationState<TState>>,
+      ) => OptionalAsync<Partial<MutationState<TState>>>
     }
 
     interface EventPayload { }
@@ -220,12 +218,14 @@ Mutation resolvers of kind `javascript/es5` take the form of an ES5 javascript m
       [name: string]: EventPayload
     }
 
+    // Optionally support async functions
+    type OptionalAsync<T> = Promise<T> | T
+
+    // Infer the payload type from the event name, given an EventTypeMap
     type InferEventPayload<
       TEvent extends keyof TEvents,
       TEvents extends EventTypeMap
-    > =
-      TEvent extends keyof TEvents ? TEvents[TEvent] :
-      any
+    > = TEvent extends keyof TEvents ? TEvents[TEvent] : any
     ```
     See the example below for a demonstration of this.
 
