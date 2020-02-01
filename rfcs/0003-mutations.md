@@ -23,11 +23,11 @@
 
 ## Summary
 
-GraphQL mutations allow developers to add executable functions to their schema. Callers can invoke these functions using GraphQL queries. An introduction to how mutations are defined and work can be found [here](https://graphql.org/learn/queries/#mutations). This RFC will assume the reader understands how to use GraphQL mutations in a traditional Web2 application. This proposal describes how mutations are added to The Graph's toolchain, and used to replace web3 write operations the same way The Graph has replaced Web3 read operations.
+GraphQL mutations allow developers to add executable functions to their schema. Callers can invoke these functions using GraphQL queries. An introduction to how mutations are defined and work can be found [here](https://graphql.org/learn/queries/#mutations). This RFC will assume the reader understands how to use GraphQL mutations in a traditional Web2 application. This proposal describes how mutations are added to The Graph's toolchain, and used to replace Web3 write operations the same way The Graph has replaced Web3 read operations.
 
 ## Goals & Motivation
 
-The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications on top of complex protocols. Since dApps have two primary interactions with web3 protocols (reading & writing), the next logical addition is write support.
+The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications on top of complex protocols. Since dApps have two primary interactions with Web3 protocols (reading & writing), the next logical addition is write support.
 
 Protocol developers that use a subgraph still often publish a Javascript wrapper library for their dApp developers (examples: [DAOstack](https://github.com/daostack/client), [ENS](https://github.com/ensdomains/ensjs), [LivePeer](https://github.com/livepeer/livepeerjs/tree/master/packages/sdk), [DAI](https://github.com/makerdao/dai.js/tree/dev/packages/dai), [Uniswap](https://github.com/Uniswap/uniswap-sdk)). This is done to help speed up dApp development and promote consistency with protocol usage patterns. With the addition of mutations to the Graph Protocol's GraphQL tooling, Web3 reading & writing can now both be invoked through GraphQL queries. dApp developers can now simply refer to a single GraphQL schema that defines the entire protocol.
 
