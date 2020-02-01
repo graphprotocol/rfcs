@@ -607,9 +607,6 @@ The existing alternative that protocol developers are creating for dApp develope
 - **Should dApps be able to define event handlers for mutation events?**
   dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different form the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.
 
-- **Should the resolvers module be ES5 compliant?**  
-  The prototype was originally developed under these conditions. ES5 compliance has since been abandoned as it has proven nearly impossible to successfully transpile all dependencies into a single monolithic module.
-
 - **Should the Graph Node's schema introspection endpoint respond with the "full" schema, including the mutations' schema?**
   Developers could fetch the "full" schema by looking up the subgraph's manifest, read the `mutations.schema.file` hash value, and fetching the full schema from IPFS. Should the graph-node support querying this full schema directly from the graph-node itself through the introspection endpoint?  
 
