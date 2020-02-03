@@ -5,6 +5,7 @@
   - [Approved RFCs](./rfcs/approved.md)
     - [RFC-0001: Subgraph Composition](./rfcs/0001-subgraph-composition.md)
     - [RFC-0002: Ethereum Tracing Cache](./rfcs/0002-ethereum-tracing-cache.md)
+    - [RFC-0003: Mutations](./rfcs/0003-mutations.md)
   - [Obsolete RFCs](./rfcs/obsolete.md)
   - [Rejected RFCs](./rfcs/rejected.md)
 - [Engineering Plans](./engineering-plans/index.md)
