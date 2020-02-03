@@ -11,10 +11,10 @@
   <dd>2019-12-20</dd>
 
   <dt>Date of approval</dt>
-  <dd>YYYY-MM-DD</dd>
+  <dd>2020-2-03</dd>
 
   <dt>Approved by</dt>
-  <dd>First Person, Second Person</dd>
+  <dd>Jannis Pohlmann</dd>
 </dl>
 
 ## Contents
@@ -443,7 +443,7 @@ In addition to the resolvers module defined above, the dApp has access to a run-
     ```
 
 For applications using Apollo and React, a run-time API is available which mimics commonly used hooks and components for executing mutations, with the addition of having the mutation state available to the caller. This package is called `@graphprotocol/mutations-apollo-react` and is defined like so:
-  - `useMutation` - see https://www.apollographql.com/docs/react/data/mutations/#executing-a-mutation
+  - `useMutation` - see https://www.apollographql.com/docs/react/data/mutations/#executing-a-mutation  
     ```typescript
     import { DocumentNode } from "graphql"
     import {
@@ -479,7 +479,8 @@ For applications using Apollo and React, a run-time API is available which mimic
       mutationOptions: MutationHookOptions<TData, TVariables>
     ): MutationTupleWithState<TState, TData, TVariables> => { ... }
     ```
-  - `Mutation` - see https://www.howtographql.com/react-apollo/3-mutations-creating-links/
+
+  - `Mutation` - see https://www.howtographql.com/react-apollo/3-mutations-creating-links/  
     ```typescript
     interface MutationComponentOptionsWithState<
       TState,
@@ -503,7 +504,7 @@ For applications using Apollo and React, a run-time API is available which mimic
     ```
 
 For example:  
-`dApp/src/App.tsx`
+`dApp/src/App.tsx`  
 ```typescript
 import {
   createMutations,
