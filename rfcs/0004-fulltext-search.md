@@ -41,7 +41,7 @@ and attributes. Wildcard string matching does provide string filtering, but
 users have come to expect the easy to use filtering that comes with fulltext 
 search systems.
 
-To facilitate building effective user interfacee human-user friendly query 
+To facilitate building effective user interfaces human-user friendly query 
 filtering is essential. Lexical, composite fulltext search filters can provide 
 the tools necessary for front-end developers to implement powerful search 
 bars that filter data across multiple fields of an Entity.
@@ -90,7 +90,7 @@ of the index and aim to reduce the need to create new subgraphs for the
 express purpose of updating fulltext search fields. 
 
 For each fulltext search API a subgraph developer must be able to specify:
-    1. a language, 
+    1. a language (specified using an `ISO 639-1` code), 
     2. a set of text document fields to include,
     3. relative weighting for each field,
     4. a choice of ranking algorithm for sorting query result items.
@@ -122,8 +122,8 @@ type _Schema_
   )
   @fulltext(
     name: "search",
-    language: "english",
-    algorithm: ranked, # variant of `_FullTextAlgorithm` enum
+    language: EN, # variant of `_FullTextLanguage` enum
+    algorithm: RANKED, # variant of `_FullTextAlgorithm` enum
     include: [
       {
         entity: "Band",
