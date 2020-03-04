@@ -14,10 +14,10 @@
   <dd>2020-01-05</dd>
 
   <dt>Date of approval</dt>
-  <dd>-</dd>
+  <dd>2020-02-10</dd>
 
   <dt>Approved by</dt>
-  <dd>-</dd>
+  <dd>Jannis Pohlmann</dd>
 </dl>
 
 ## Contents
