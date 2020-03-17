@@ -31,6 +31,12 @@ creating a new subgraph that uses the failed subgraph's data up to a block
 that the subgraph writer deems reliable, and continue indexing using the
 new subgraph's mappings. We call this operation *grafting* subgraphs.
 
+The main use case for this feature is to allow subgraph developers to move
+quickly past an error in a subgraph, especially during development. The
+overarching goal should always be to replace a subgraph that was grafted
+with one that was indexed from scratch as soon as that is reasonably
+possible.
+
 ## Subgraph manifest changes
 
 The user-facing control for this feature will be a new optional
@@ -57,6 +63,12 @@ forms, and defaults to `create`:
       subgraph: Qm...
       block: 123456
 
+- For expediency, we will first implement `copy` and see if `reuse` is
+  actually needed; `reuse` is very invasive and can interact badly with
+  other features (e.g., sharing of subgraph deployments under several
+  names). The big advantage of `reuse` is that it does not require copying
+  data and will therefore be faster to initialize a subgraph, but it
+  remains to be seen how much of a factor that is in practice
 - For `copy` and `reuse` it is a deploy-time error if the source subgraph
   does not exist or has not indexed the given `block` yet
 - To start with, for grafting, the source subgraph and the grafted subgraph
@@ -64,11 +76,6 @@ forms, and defaults to `create`:
   over time.
 - It is an error to graft onto a source subgraph that uses JSONB storage
   (i.e., the source subgraph must use relational storage)
-- For expediency, we will first implement `copy` and see if `reuse` is
-  actually needed - the big advanatge of `reuse` is that it does not
-  require copying data and will therefore be faster to initialize a
-  subgraph, but it remains to be seen how much of a factor that is in
-  practice
 
 ## Implementation
 
@@ -112,6 +119,9 @@ forms, and defaults to `create`:
            should be ok; it might lead to less than helpful error messages
            when trying to query the old subgraph but should cause no harm
            beyond that
+- Since we are changing the manifest format, `graph-cli` will need
+  validation for that. `graph-node`'s manifest validation will also need to
+  be updated.
 
 ## Tests
 
