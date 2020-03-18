@@ -141,7 +141,21 @@ and the [manifest reference](https://github.com/graphprotocol/graph-node/blob/ma
 
 ## Implementation Plan
 
-The plan is described above under 'Implementation'
+The plan only covers implementing deployment modes `copy` and `create`, but
+not `reuse`
+- (1) Compare two `Layout`s and report some sort of useful error if they are
+  not equal/compatible
+- (1) Copy subgraph data after creation of the `Layout`; copy dynamic data
+  sources and adjust their id's
+- (0.5) Rewind an existing subgraph, and set the subgraph's `latestEthereumBlock`
+  to that
+- (0.5) Extract deployment mode from the subgraph manifest and pass that into
+  `create_subgraph`. Have `create_subgraph` use the above steps to copy the
+  source subgraph if the deployment mode asks for that. Check that source
+  subgraph has advanced past the graft point/block
+- (0.5) Validate `deployment` construct in subgraph manifest
+- (0.5) Update documentation
+- (0.5) Update validation in `graph-cli`
 
 ## Open Questions
 
