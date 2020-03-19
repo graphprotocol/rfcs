@@ -70,7 +70,10 @@ forms, and defaults to `create`:
   data and will therefore be faster to initialize a subgraph, but it
   remains to be seen how much of a factor that is in practice
 - For `copy` and `reuse` it is a deploy-time error if the source subgraph
-  does not exist or has not indexed the given `block` yet
+  does not exist.
+- For `copy` and `reuse`, the block up to which we use the source subgraph
+  must be final. It must therefore be at least `ETHEREUM_REORG_THRESHOLD`
+  blocks behind the chain head, and be on the main chain.
 - To start with, for grafting, the source subgraph and the grafted subgraph
   must have identical GraphQL schemas. We can expand/relax this requirement
   over time.
