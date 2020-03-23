@@ -22,15 +22,15 @@
 
 ## Summary
 
-Synced subgraphs no longer stop syncing on errors. Failed subgraphs return an error along with the data when queried.
+Synced subgraphs no longer halt on mapping errors, but are marked as unhealthy. Unhealthy subgraphs return an error along with the data when queried.
 
 The indexing status API is improved and documented.
 
 ## Goals & Motivation
 
-Currently, an error in a WASM trigger handler will cause a subgraph to be marked as failed and stop syncing. The proposal is for it still be marked as failed, but discard any changes made by the failed handler and attempt to continue. In the cases where the failure is catastrophic and all handlers start failing, this will not do much, but in the cases where the subgraph can continue operational with a bit of missing data, this will allow applications to continue running on up-to-date data and give developers more time to fix their subgraph.
+Currently, an error in a WASM trigger handler will cause a subgraph to be marked as failed and stop syncing. The proposal is for it to discard any changes made by the failed handler, mark the subgraph with the new 'unhealthy' status and continue syncing. In the cases where the error is catastrophic and all handlers start erroing, this will not do much, but in the cases where the subgraph can continue operational with a bit of missing data, this will allow applications to continue running on up-to-date data and give developers more time to fix their subgraph.
 
-Less catastrophic failures do have a downside: It's harder to notice that anything is wrong at all. We'll include an error in the graphql response for failed subgraphs. We will improve and document the indexing status API, so that developers can programmatically check details on a subgraph's health and build their own alerts and dashboards.
+Less catastrophic errors do have a downside: It's harder to notice that anything is wrong at all. We'll include an error in the graphql response for unhealthy and failed subgraphs. We will improve and document the indexing status API, so that developers can programmatically check details on a subgraph's health and build their own alerts and dashboards.
 
 ## Urgency
 
@@ -38,23 +38,25 @@ Sooner is better than later.
 
 ## Terminology
 
-No new terminology, but the semantics of the "Failed" status are altered.
+A new subgraph health status called "unhealthy" is added, so instead of a subgraph being failed or not, it can be healthy, unhealthy or failed.
 
 ## Detailed Design
 
 ### Error handling
 
-If a WASM handler terminates with a trap, that is an error. The node discards all entity operations and data source operations done by the handler and continue syncing.
+Subgraphs now have three possible health status: 'Healthy' is normal operation, 'Unhealthy' is syncing with errors, and 'Failed' is halted due to an error.
 
-For subgraphs that are not yet synced, any handler error halts syncing, so errors in pending versions will not make their way to the current version. 
+If a WASM handler terminates with a trap, the subgraph becomes unhealthy. The node discards all entity operations and data source operations done by the handler and continues syncing.
 
-When the node starts, we currently reset the failed flag on subgraphs. The flag is no longer be reset on synced subgraphs, since the subgraph will already be past the errors.
+For subgraphs that are not yet synced, any handler error is still a failure and halts syncing, so errors in pending versions will not make their way to the current version. 
 
-Any graphql queries to a failed subgraph will include an error of the form:
+When the node starts, we currently reset the failed flag on subgraphs. Failed subgraphs will still be reset to healthy to attempt to recover, but unhealthy subgraphs are kept unhealthy, since the subgraph will already be past the errors.
+
+Any graphql queries to an unhealthy or failed subgraph will include an error of the form:
 
 ```
 {
-	message: "Subgraph failed"
+	message: "Subgraph not healthy"
 }
 ```
 
@@ -64,17 +66,13 @@ So that applications will always be aware that queries may have inconsistent dat
 
 The indexing status API will be revamped.
 
-The subgraph indexing status API currently has the top level query:
+The following top level query is added:
 
-    indexingStatusesForSubgraphName(subgraphName: String!): [SubgraphIndexingStatus!]!
-
-This is changed to:
-
-    indexingStatusesForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
+    indexingStatusForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
 
 Which returns null if the name is not found, and returns the status for the current version of the subgraph otherwise.
 
-A field `failedAfter`  is added to record the block previous to the first error.
+A field `lastHealthyBlock`  is added to record the block previous to the first error.
 
 Errors are made more than just a string with the `Error` type.
 
@@ -82,13 +80,15 @@ The complete indexing status API schema is:
 
 ```graphql
 type Query {
-  indexingStatusesForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
+  indexingStatusForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
+  indexingStatusesForSubgraphName(subgraphName: String!): [SubgraphIndexingStatus!]!
   indexingStatuses(subgraphs: [String!]): [SubgraphIndexingStatus!]!
 }
 
 type SubgraphIndexingStatus {
   subgraph: String!
   synced: Boolean!
+  health: Health!
   errors: [Error!]! # Sorted from first to last
   chains: [ChainIndexingStatus!]!
   node: String!
@@ -100,7 +100,7 @@ interface ChainIndexingStatus {
   chainHeadBlock: Block
   earliestBlock: Block
   latestBlock: Block
-  failedAfter: Block
+  lastHealthyBlock: Block
 }
 
 type EthereumIndexingStatus implements ChainIndexingStatus { }
@@ -117,28 +117,38 @@ type Error {
 	# Context for the error.
 	network: String!
 	block: Block!
-	transaction: Bytes
 	handler: String
+}
+
+enum Health {
+  "Subgraph syncing normally"
+  Healthy,
+  "Subgraph syncing but with errors"
+  Unhealthy,
+  "Subgraph halted due to errors"
+  Failed,
 }
 ```
 
-Since the indexing API is a view to the subgraph metadata, an `Error` type is also added to the metadata where subgraph errors are recorded.
+Since the indexing API is a view to the subgraph metadata, an `Error` type is also added to the metadata where subgraph errors are recorded. The `health` field is also added to the metadata, replacing the  `failed` flag which is deprecated.
 
 ## Compatibility
 
 This does incompatible changes to the indexing status API, however that API was so far experimental and undocumented.
 
-The behavior of synced, failed subgraphs is changed to keep indexing. Our consensus is that the current behavior is useful to nobody and this can only be an improvement.
+The behavior of synced subgraphs when encountering an error is changed to keep indexing. Our consensus is that the current behavior is useful to nobody and this can only be an improvement.
 
 ## Drawbacks and Risks
 
-- Changing the behavior of failed subgraphs has risks. There may be unanticipated consequences which may slip through testing. We may have gotten our rationale wrong and users may find the new behavior worse for factors we did not consider.
+- Changing the behavior of errors on synced subgraphs has risks. There may be unanticipated consequences which may slip through testing. We may have gotten our rationale wrong and users may find the new behavior worse for factors we did not consider.
 
-## Alternatives
+## Alternatives & Extensions
 
 - Don't change the default behavior, and put make the "continue on failure" mode opt-in through a flag on the manifest. With the possible intention of making it the default in the future. This exposes us to less risk when rolling this out. The downsides are that adoption and feedback will be slower and developers will need to update their subgraphs in order to benefit.
+- Future extension: Allow mappings to define a trap handler that catches traps on a specific trigger handler. The mapping can then decide whether the subgraph should fail, be set as unhealthy, or just continue normally.
 
 ## Open Questions
 
-- The field name `failedAfter` is up for bikeshedding, aternatives: `lastHealthyBlock`, `blockBeforeFailure`, `lastGoodBlock`...
+- The field name `lastHealthyBlock` is up for bikeshedding, aternatives: `failedAfter`, `blockBeforeFailure`, `lastGoodBlock`...
+- Do we want to keep the `node` field in the indexing status API? It feels too iternal.
 
