@@ -122,11 +122,11 @@ type Error {
 
 enum Health {
   "Subgraph syncing normally"
-  Healthy,
+  healthy,
   "Subgraph syncing but with errors"
-  Unhealthy,
+  unhealthy,
   "Subgraph halted due to errors"
-  Failed,
+  failed,
 }
 ```
 
@@ -149,6 +149,5 @@ The behavior of synced subgraphs when encountering an error is changed to keep i
 
 ## Open Questions
 
-- The field name `lastHealthyBlock` is up for bikeshedding, aternatives: `failedAfter`, `blockBeforeFailure`, `lastGoodBlock`...
-- Do we want to keep the `node` field in the indexing status API? It feels too iternal.
+No unresolved questions.
 
