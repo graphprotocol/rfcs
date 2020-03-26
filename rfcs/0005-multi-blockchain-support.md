@@ -147,8 +147,8 @@ generation for ABIs is extended to support more ABIs than just Ethereum's. Based
 on the type of ABI in top-level `abis` section in the manifest, different code
 generation logic is applied.
 
-What code is generated exactly will vary from chain to chain and is therefor not
-specified in this RFC.
+What code is generated exactly will vary from chain to chain and is therefore
+not specified in this RFC.
 
 ### Mapping APIs and Types
 
@@ -235,8 +235,7 @@ how to move forward and how to handle chain reorgs.
 
 All that subgraphs really care about during indexing, however, is:
 
-1. What are historic and live triggers relevant that are relevant to the
-   subgraph and that should be processed?
+1. Which triggers are relevant to the subgraph and its mappings?
 
 2. How can these triggers be updated when new data sources are created from
    templates during indexing?
@@ -272,7 +271,7 @@ To support multiple blockchains, subgraph indexing is changed as follows:
 A number of features in the current store interface is based on so-called
 Ethereum block pointers, a pair of block hash and block number. This is changed
 to a generic block pointer type, where the hash is a byte array rather than an
-Etheruem 256-bit hash.
+Ethereum 256-bit hash.
 
 Another part of the current store that is specific to Ethereum is the chain
 store interface. Assuming the ongoing work on network indexing is developed far
@@ -284,7 +283,7 @@ network indexer component.
 ### Adding Support for a New Chain
 
 This section covers what it takes to add support for a new chain. Please note
-that this RFC specifies the details only to an extend that allows to assess
+that this RFC specifies the details only to an extent that allow us to assess
 whether the direction is feasible. Names and data structure details may vary in
 the implementation.
 
@@ -343,7 +342,6 @@ trait Network {
 
 /// Events emitted by a network indexer.
 pub enum NetworkIndexerEvent<T: Block> {
-    ChainHead(BlockPointer),
     Revert {
         from: BlockPointer,
         to: BlockPointer,
@@ -368,7 +366,6 @@ struct BlockWithTriggers<T: Block> {
 
 /// Events emitted by a block stream.
 enum BlockStreamEvent<T: Block> {
-    ChainHead(BlockPointer),
     Revert(BlockPointer),
     Block(BlockWithTriggers<T>)
 }
@@ -417,14 +414,14 @@ module.exports = {
   // An example for Ethereum could look as follows:
   typeConversions: {
     fromAssemblyScript: [
-      ['Address', 'address', code => `EthereumValue.fromAddress(${code})`],
-      ['boolean', 'bool', code => `EthereumValue.fromBoolean(${code})`],
-      ['Bytes', 'byte', code => `EthereumValue.fromFixedBytes(${code})`],
-      ['Bytes', 'bytes', code => `EthereumValue.fromBytes(${code})`],
+      ['Address', 'address', code => `ethereum.Value.fromAddress(${code})`],
+      ['boolean', 'bool', code => `ethereum.Value.fromBoolean(${code})`],
+      ['Bytes', 'byte', code => `ethereum.Value.fromFixedBytes(${code})`],
+      ['Bytes', 'bytes', code => `ethereum.Value.fromBytes(${code})`],
       [
         'Bytes',
         /^bytes(1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32)$/,
-        code => `EthereumValue.fromFixedBytes(${code})`,
+        code => `ethereum.Value.fromFixedBytes(${code})`,
       ],
       ...
     ],
@@ -515,8 +512,9 @@ estimating this work is the responsibility of the engineering plan, however.
 ## Alternatives
 
 There are nuances where the design could look different, specifically around how
-the manifest spec could be updated and whether new chain integrations are developed
-as plugins or not.
+the manifest spec could be updated and whether new chain integrations are
+developed as plugins or not. For the moment, an approach _without_ plugins is
+considered the most efficient path forward.
 
 ## Open Questions
 
@@ -525,10 +523,10 @@ as plugins or not.
   supporting it initially, but it may not actually be that hard.
 
 - In order for time-travel queries to work for entities, we may have to force
-  entities to belong to a specific network. Is this correct and how is this best
-  be achieved?
+  entities or entity-attribute sets to belong to a specific network. Is this
+  correct and how is this best be achieved?
 
-- Querying interfaces (whethe from composed subgraphs or from separate data
+- Querying interfaces (whether from composed subgraphs or from separate data
   sources) will not be able to take a single `block` argument for time-travel
   queries. They may have to take all blocks for all networks involved in the
   concrete types?
