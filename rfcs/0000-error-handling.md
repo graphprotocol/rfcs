@@ -52,23 +52,24 @@ For subgraphs that are not yet synced, any handler error is still a failure and 
 
 When the node starts, we currently reset the failed flag on subgraphs. Failed subgraphs will still be reset to healthy to attempt to recover, but unhealthy subgraphs are kept unhealthy, since the subgraph will already be past the errors.
 
-Any graphql queries to an unhealthy or failed subgraph will include an error of the form:
+Any graphql queries to an unhealthy subgraph will include an error of the form:
 
 ```
 {
-	message: "Subgraph not healthy"
+	message: "unhealthy"
 }
 ```
 
-So that applications will always be aware that queries may have inconsistent data. Developers should refer to the indexing status API for details on the errors.
+Or `message: "failed"` if failed. So that applications will always be aware that queries may have inconsistent data. Developers should refer to the indexing status API for details on the errors.
 
 ### Indexing Status API
 
 The indexing status API will be revamped.
 
-The following top level query is added:
+The following top level queries are added:
 
-    indexingStatusForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
+    indexingStatusForCurrentVersion(subgraphName: String!): SubgraphIndexingStatus
+    indexingStatusForPendingVersion(subgraphName: String!): SubgraphIndexingStatus
 
 Which returns null if the name is not found, and returns the status for the current version of the subgraph otherwise.
 
@@ -80,7 +81,8 @@ The complete indexing status API schema is:
 
 ```graphql
 type Query {
-  indexingStatusForSubgraphName(subgraphName: String!): SubgraphIndexingStatus
+  indexingStatusForCurrentVersion(subgraphName: String!): SubgraphIndexingStatus
+  indexingStatusForPendingVersion(subgraphName: String!): SubgraphIndexingStatus
   indexingStatusesForSubgraphName(subgraphName: String!): [SubgraphIndexingStatus!]!
   indexingStatuses(subgraphs: [String!]): [SubgraphIndexingStatus!]!
 }
@@ -89,7 +91,9 @@ type SubgraphIndexingStatus {
   subgraph: String!
   synced: Boolean!
   health: Health!
-  errors: [Error!]! # Sorted from first to last
+  
+  # Sorted from first to last, limited to 1000
+  errors: [Error!]!
   chains: [ChainIndexingStatus!]!
   node: String!
 }
