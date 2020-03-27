@@ -331,6 +331,27 @@ trait Blockchain {
     fn chain(&self, name: String) -> Result<Self::Chain, Error>;
 }
 
+// Common options for interacting with any chain.
+
+struct LatestBlockOptions {
+    logger: Logger,
+}
+
+struct BlockByNumberOptions {
+    logger: Logger,
+    number: BigInt,
+}
+
+struct BlockByHashOptions {
+    logger: Logger,
+    hash: Bytes
+}
+
+struct BlockStreamOptions<'a> {
+    logger: Logger,
+    data_sources: Vec<&'a DataSource>,
+}
+
 /// Represents a network (essentially an instance of a `Chain`).
 trait Chain {
     type Block: Block;
@@ -338,17 +359,17 @@ trait Chain {
     type BlockStream: BlockStream<Self::Block>;
 
     // Methods common to all chains. These are needed by the chain indexer
-    // and block stream.
-    fn latest_block(&self, options: ???) -> LatestBlockFuture;
-    fn block_by_number(&self, options: ???) -> BlockByNumberFuture;
-    fn block_by_hash(&self, options: ???) -> BlockByHashFuture;
+    // and block stream, potentially also by time-travel queries.
+    async fn latest_block(&self, options: LatestBlockOptions) -> Result<Self::Block, Error>;
+    async fn block_by_number(&self, options: BlockByNumberOptions) -> Result<Self::Block, Error>;
+    async fn block_by_hash(&self, options: BlockByHashOptions) -> Result<Self::Block, Error>;
 
-    /// Indexes chain data hand handles reorgs.
-    fn indexer(&self, options: ???) -> Result<Self::ChainIndexer, Error>;
+    // Indexes chain data hand handles reorgs.
+    async fn indexer(&self) -> Result<Self::ChainIndexer, Error>;
     
-    /// Provides a block/trigger stream for given options (including
-    /// data sources, to generate filters).
-    fn block_stream(&self, options: ???) -> Result<Self::BlockStream, Error>;
+    // Provides a block/trigger stream for given options (including
+    // data sources, to generate filters).
+    async fn block_stream<'a>(&self, options: BlockStreamOptions<'a>) -> Result<Self::BlockStream, Error>;
 }
 
 /// Events emitted by a chain indexer.
