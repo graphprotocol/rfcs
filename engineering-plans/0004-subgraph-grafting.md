@@ -8,7 +8,7 @@
   <dd>No RFC</dd>
 
   <dt>Engineering Plan pull request</dt>
-  <dd><a href="URL">URL</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/17">https://github.com/graphprotocol/rfcs/pull/17</a></dd>
 
   <dt>Date of submission</dt>
   <dd>2020-03-17</dd>
@@ -17,7 +17,8 @@
   <dd>YYYY-MM-DD</dd>
 
   <dt>Approved by</dt>
-  <dd>First Person, Second Person</dd>
+  <dd>Jannis Pohlmann</dd>
+  <dd>Zac Burns</dd>
 </dl>
 
 ## Contents
