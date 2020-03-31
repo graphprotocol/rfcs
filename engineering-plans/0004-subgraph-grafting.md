@@ -14,7 +14,7 @@
   <dd>2020-03-17</dd>
 
   <dt>Date of approval</dt>
-  <dd>YYYY-MM-DD</dd>
+  <dd>2020-03-20</dd>
 
   <dt>Approved by</dt>
   <dd>Jannis Pohlmann</dd>
