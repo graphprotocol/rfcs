@@ -122,35 +122,42 @@ condition we might need as types A, B, C, and D.
 |    7 | FALSE        | FALSE           | TRUE        | child.id = parent.child    | D    |
 |    8 | FALSE        | FALSE           | FALSE       | child.id = parent.child    | D    |
 
+In addition to how the data about the parent/child relationship is stored,
+the multiplicity of the parent/child relationship also influences query
+generation: if each parent can have at most a single child, queries can be
+much simpler than if we have to account for multiple children per parent,
+which requires paginating them. We also need to detect cases where the
+mappings created multiple children per parent. We do this by adding a
+clause `limit {parent_ids.len} + 1` to the query, so that if there is one
+parent with multiple children, we will select it, but still protect
+ourselves against mappings that produce catastrophically bad data with huge
+numbers of children per parent. The GraphQL execution logic will detect
+that there is a parent with multiple children, and generate an error.
+
 When we query children, we already have a list of all parents from running
 a previous query. To find the children, we need to have the id of the
 parent that child is related to, and, when the parent stores the ids of its
 children directly (types C and D) the child ids for each parent id.
 
-The query for each type has the shape
-```sql
-select c.*, p.parent_id
-  from {expand_parents}
-       cross join lateral
-       (select *
-          from children c
-         where {linked_children}
-           and .. other conditions on c ..
-         order by c.{sort_key}
-         limit {first} offset {skip}) c
- order by c.{sort_key}
-```
-
-The `expand_parents` clause expands the list of parent ids (for types A and
-B) or the lists of parent and child ids (for types C and D) into a virtual
-table. The `cross join lateral` then loops over that list and selects the
-`first` matching children for each parent. The `linked_children` clause
-describes how parent and children are linked.
+The following queries all produce a relation that has the same columns as
+the table holding children, plus a column holding the id of the parent that
+the child belongs to.
 
 #### Type A
 
 Use when parent is derived and child stores a list of parents
 
+Data needed to generate:
+
+-   children: name of child table
+-   parent_ids: list of parent ids
+-   parent_field: name of parents field (array) in child table
+-   single: boolean to indicate whether a parent has at most one child or
+    not
+
+The implementation uses an `EntityLink::Direct` for joins of this type.
+
+##### Multiple children per parent
 ```sql
 select c.*, p.id as parent_id
   from unnest({parent_ids}) as p(id)
@@ -164,25 +171,31 @@ select c.*, p.id as parent_id
  order by c.{sort_key}
 ```
 
-For this type,
+##### Single child per parent
 ```sql
-expand_parents  := unnest({parent_ids}) as p(id)
-linked_children := p.id = any(c.{parent_field})
+select c.*, p.id as parent_id
+  from unnest({parent_ids}) as p(id),
+       children c
+ where c.{parent_field} @> array[p.id]
+   and .. other conditions on c ..
+ limit {parent_ids.len} + 1
 ```
-
-Data needed to generate:
-
--   children: name of child table
--   parent_ids: list of parent ids
--   parent_field: name of parents field (array) in child table
-
-The implementation uses a `EntityLink::Direct` for joins of this type.
-
 
 #### Type B
 
 Use when parent is derived and child stores a single parent
 
+Data needed to generate:
+
+-   children: name of child table
+-   parent_ids: list of parent ids
+-   parent_field: name of parent field (scalar) in child table
+-   single: boolean to indicate whether a parent has at most one child or
+    not
+
+The implementation uses an `EntityLink::Direct` for joins of this type.
+
+##### Multiple children per parent
 ```sql
 select c.*, p.id as parent_id
   from unnest({parent_ids}) as p(id)
@@ -196,24 +209,30 @@ select c.*, p.id as parent_id
  order by c.{sort_key}
 ```
 
-For this type,
+##### Single child per parent
+
 ```sql
-expand_parents  := unnest({parent_ids}) as p(id)
-linked_children := p.id = c.{parent_field}
+select c.*, c.{parent_field} as parent_id
+  from children c
+ where c.{parent_field} = any({parent_ids})
+   and .. other conditions on c ..
+ limit {parent_ids.len} + 1
 ```
+
+#### Type C
+
+Use when the parent stores a list of its children.
 
 Data needed to generate:
 
 -   children: name of child table
 -   parent_ids: list of parent ids
--   parent_field: name of parent field (scalar) in child table
+-   child\_id_matrix: array of arrays where `child_id_matrix[i]` is an array
+    containing the ids of the children for `parent_id[i]`
 
-The implementation uses a `EntityLink::Direct` for joins of this type.
+The implementation uses a `EntityLink::Parent` for joins of this type.
 
-
-#### Type C
-
-Use when the parent stores a list of its children.
+##### Multiple children per parent
 
 ```sql
 select c.*, p.id as parent_id
@@ -229,53 +248,19 @@ select c.*, p.id as parent_id
  order by c.{sort_key}
 ```
 
-For this type,
-```sql
-expand_parents  := rows from (unnest({parent_ids}),
-                              reduce_dim({child_id_matrix}))
-                          as p(id, child_ids)
-linked_children := c.id = any(p.child_ids)
-```
-
-Data needed to generate:
-
--   children: name of child table
--   parent_ids: list of parent ids
--   child\_id_matrix: array of arrays where `child_id_matrix[i]` is an array
-    containing the ids of the children for `parent_id[i]`
-
-The implementation uses a `EntityLink::Parent` for joins of this type.
-
-
 Note that `reduce_dim` is a custom function that is not part of [ANSI
 SQL:2016](https://en.wikipedia.org/wiki/SQL:2016) but is needed as there is
 no standard way to decompose a matrix into a table where each row contains
 one row of the matrix. The `ROWS FROM` construct is also not part of ANSI
 SQL.
 
+##### Single child per parent
+
+Not possible with relations of this type
+
 #### Type D
 
 Use when parent is not a list and not derived
-
-```sql
-select c.*, p.id as parent_id
-  from rows from (unnest({parent_ids}), unnest({child_ids})) as p(id, child_id)
-         cross join lateral
-       (select *
-          from children c
-         where c.id = p.child_id
-           and .. other conditions on c ..
-         order by c.{sort_key}
-         limit {first} offset {skip}) c
- order by c.{sort_key}
-```
-
-For this type,
-```sql
-expand_parents  := rows from (unnest({parent_ids}), unnest({child_ids}))
-                          as p(id, child_id)
-linked_children := c.id = p.child_id
-```
 
 Data needed to generate:
 
@@ -285,6 +270,20 @@ Data needed to generate:
     `child_ids[i]` is the id of the child for `parent_id[i]`
 
 The implementation uses a `EntityLink::Parent` for joins of this type.
+
+##### Multiple children per parent
+
+Not possible with relations of this type
+
+##### Single child per parent
+
+```sql
+select c.*, p.id as parent_id
+  from rows from (unnest({parent_ids}), unnest({child_ids})) as p(id, child_id),
+       children c
+ where c.id = p.child_id
+   and .. other conditions on c ..
+```
 
 The `ROWS FROM` construct is not part of ANSI SQL.
 
@@ -333,28 +332,22 @@ select '{__typename}' as entity, c.vid, c.id, c.{sort_key}, p.id as parent_id
 ```
 
 and then use that data to fill in the complete details of each concrete
-entity. The overall structure of this query then is
+entity. The query `type_query(children)` is the query from the previous
+section according to the concrete type of `children`, but without the
+`select`, `limit`, `offset` or `order by` clauses. The overall structure of
+this query then is
 
 ```sql
 with matches as (
-  select c.*
-    from unnest({all_parent_ids}) as q(id)
-         cross join lateral
-         (select '{children.object}' as entity, c.vid, c.id,
-                 c.{sort_key}, p.id as parent_id
-            from {expand_parents}
-                 cross join lateral
-                 (select *
-                    from {children.table} c
-                   where {linked_children}
-                     and p.id = q.id
-                     and .. other conditions on c ..)
-                   union all
-                         .. range over all child types ..
-                   order by {sort_key}
-                   limit {first} offset {skip}) c)
+    select '{children.object}' as entity, c.vid, c.id,
+           c.{sort_key}, p.id as parent_id
+      from .. type_query(children) ..
+     union all
+       .. range over all child types ..
+     order by {sort_key}
+     limit {first} offset {skip})
 select m.*, to_jsonb(c.*) as data
-  from matchs m, {children.table} c
+  from matches m, {children.table} c
  where c.vid = m.vid and m.entity = '{children.object}'
  union all
        .. range over all child tables ..
