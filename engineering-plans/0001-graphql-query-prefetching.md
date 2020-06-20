@@ -219,6 +219,15 @@ select c.*, c.{parent_field} as parent_id
  limit {parent_ids.len} + 1
 ```
 
+Alternatively, this is worth a try, too:
+```sql
+select c.*, c.{parent_field} as parent_id
+  from unnest({parent_ids}) as p(id), children c
+ where c.{parent_field} = p.id
+   and .. other conditions on c ..
+ limit {parent_ids.len} + 1
+```
+
 #### Type C
 
 Use when the parent stores a list of its children.
