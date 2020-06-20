@@ -1,0 +1,880 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>RFC-0003: Mutations - Graph Protocol RFCs and Engineering Plans</title>
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../assets/mermaid.css">
+        
+        <link rel="stylesheet" href="../assets/custom.css">
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../rfcs/index.html"><strong aria-hidden="true">2.</strong> RFCs</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rfcs/approved.html"><strong aria-hidden="true">2.1.</strong> Approved RFCs</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rfcs/0001-subgraph-composition.html"><strong aria-hidden="true">2.1.1.</strong> RFC-0001: Subgraph Composition</a></li><li class="chapter-item expanded "><a href="../rfcs/0002-ethereum-tracing-cache.html"><strong aria-hidden="true">2.1.2.</strong> RFC-0002: Ethereum Tracing Cache</a></li><li class="chapter-item expanded "><a href="../rfcs/0003-mutations.html" class="active"><strong aria-hidden="true">2.1.3.</strong> RFC-0003: Mutations</a></li><li class="chapter-item expanded "><a href="../rfcs/0004-fulltext-search.html"><strong aria-hidden="true">2.1.4.</strong> RFC-0004: Fulltext Search</a></li></ol></li><li class="chapter-item expanded "><a href="../rfcs/obsolete.html"><strong aria-hidden="true">2.2.</strong> Obsolete RFCs</a></li><li class="chapter-item expanded "><a href="../rfcs/rejected.html"><strong aria-hidden="true">2.3.</strong> Rejected RFCs</a></li></ol></li><li class="chapter-item expanded "><a href="../engineering-plans/index.html"><strong aria-hidden="true">3.</strong> Engineering Plans</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../engineering-plans/approved.html"><strong aria-hidden="true">3.1.</strong> Approved Plans</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../engineering-plans/0001-graphql-query-prefetching.html"><strong aria-hidden="true">3.1.1.</strong> PLAN-0001: GraphQL Query Prefetching</a></li><li class="chapter-item expanded "><a href="../engineering-plans/0002-ethereum-tracing-cache.html"><strong aria-hidden="true">3.1.2.</strong> PLAN-0002: Ethereum Tracing Cache</a></li><li class="chapter-item expanded "><a href="../engineering-plans/0003-remove-jsonb-storage.html"><strong aria-hidden="true">3.1.3.</strong> PLAN-0003: Remove JSONB Storage</a></li></ol></li><li class="chapter-item expanded "><a href="../engineering-plans/obsolete.html"><strong aria-hidden="true">3.2.</strong> Obsolete Plans</a></li><li class="chapter-item expanded "><a href="../engineering-plans/rejected.html"><strong aria-hidden="true">3.3.</strong> Rejected Plans</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Graph Protocol RFCs and Engineering Plans</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#rfc-0003-mutations" id="rfc-0003-mutations">RFC-0003: Mutations</a></h1>
+<dl>
+  <dt>Author</dt>
+  <dd>dOrg: Jordan Ellis, Nestor Amesty</dd>
+<dt>RFC pull request</dt>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/10">URL</a></dd>
+<dt>Date of submission</dt>
+  <dd>2019-12-20</dd>
+<dt>Date of approval</dt>
+  <dd>2020-2-03</dd>
+<dt>Approved by</dt>
+  <dd>Jannis Pohlmann</dd>
+</dl>
+<h2><a class="header" href="#contents" id="contents">Contents</a></h2>
+<ul>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#goals--motivation">Goals &amp; Motivation</a></li>
+<li><a href="#urgency">Urgency</a></li>
+<li><a href="#terminology">Terminology</a></li>
+<li><a href="#detailed-design">Detailed Design</a></li>
+<li><a href="#mutations-manifest">Mutations Manifest</a></li>
+<li><a href="#mutations-schema">Mutations Schema</a></li>
+<li><a href="#mutation-resolvers">Mutation Resolvers</a></li>
+<li><a href="#dapp-integration">dApp Integration</a></li>
+<li><a href="#compatibility">Compatibility</a></li>
+<li><a href="#drawbacks-and-risks">Drawbacks and Risks</a></li>
+<li><a href="#alternatives">Alternatives</a></li>
+<li><a href="#open-questions">Open Questions</a></li>
+</ul>
+<h2><a class="header" href="#summary" id="summary">Summary</a></h2>
+<p>GraphQL mutations allow developers to add executable functions to their schema. Callers can invoke these functions using GraphQL queries. An introduction to how mutations are defined and work can be found <a href="https://graphql.org/learn/queries/#mutations">here</a>. This RFC will assume the reader understands how to use GraphQL mutations in a traditional Web2 application. This proposal describes how mutations are added to The Graph's toolchain, and used to replace Web3 write operations the same way The Graph has replaced Web3 read operations.</p>
+<h2><a class="header" href="#goals--motivation" id="goals--motivation">Goals &amp; Motivation</a></h2>
+<p>The Graph has created a read semantic layer that describes smart contract protocols, which has made it easier to build applications on top of complex protocols. Since dApps have two primary interactions with Web3 protocols (reading &amp; writing), the next logical addition is write support.</p>
+<p>Protocol developers that use a subgraph still often publish a Javascript wrapper library for their dApp developers (examples: <a href="https://github.com/daostack/client">DAOstack</a>, <a href="https://github.com/ensdomains/ensjs">ENS</a>, <a href="https://github.com/livepeer/livepeerjs/tree/master/packages/sdk">LivePeer</a>, <a href="https://github.com/makerdao/dai.js/tree/dev/packages/dai">DAI</a>, <a href="https://github.com/Uniswap/uniswap-sdk">Uniswap</a>). This is done to help speed up dApp development and promote consistency with protocol usage patterns. With the addition of mutations to the Graph Protocol's GraphQL tooling, Web3 reading &amp; writing can now both be invoked through GraphQL queries. dApp developers can now simply refer to a single GraphQL schema that defines the entire protocol.</p>
+<h2><a class="header" href="#urgency" id="urgency">Urgency</a></h2>
+<p>This is urgent from a developer experience point of view. With this addition, it eliminates the need for protocol developers to manually wrap GraphQL query interfaces alongside developer-friendly write functions. Additionally, mutations provide a solution for optimistic UI updates, which is something dApp developers have been seeking for a long time (see <a href="https://github.com/aragon/nest/issues/21">here</a>). Lastly with the whole protocol now defined in GraphQL, existing application layer code generators can now be used to hasten dApp development (<a href="https://dev.to/graphqleditor/top-3-graphql-code-generators-1gnj">some examples</a>).</p>
+<h2><a class="header" href="#terminology" id="terminology">Terminology</a></h2>
+<ul>
+<li><em>Mutations</em>: Collection of mutations.</li>
+<li><em>Mutation</em>: A GraphQL mutation.</li>
+<li><em>Mutations Schema</em>: A GraphQL schema that defines a <code>type Mutation</code>, which contains all mutations. Additionally this schema can define other types to be used by the mutations, such as <code>input</code> and <code>interface</code> types.</li>
+<li><em>Mutations Manifest</em>: A YAML manifest file that is used to add mutations to an existing subgraph manifest. This manifest can be stored in an external YAML file, or within the subgraph manifest's YAML file under the <code>mutations</code> property.</li>
+<li><em>Mutation Resolvers</em>: Code module that contains all resolvers.</li>
+<li><em>Resolver</em>: Function that is used to execute a mutation's logic.</li>
+<li><em>Mutation Context</em>: A context object that's created for every mutation that's executed. It's passed as the 3rd argument to the resolver function.</li>
+<li><em>Mutation States</em>: A collection of mutation states. One is created for each mutation being executed in a given query.</li>
+<li><em>Mutation State</em>: The state of a mutation being executed. Also referred to in this document as &quot;<em>State</em>&quot;. It is an aggregate of the core &amp; extended states (see below). dApp developers can subscribe to the mutation's state upon execution of the mutation query. See the <code>useMutation</code> examples below.</li>
+<li><em>Core State</em>: Default properties present within every mutation state. Some examples: <code>events: Event[]</code>, <code>uuid: string</code>, and <code>progress: number</code>.</li>
+<li><em>Extended State</em>: Properties the mutation developer defines. These are added alongside the core state properties in the mutation state. There are no bounds to what a developer can define here. See examples below.</li>
+<li><em>State Events</em>: Events emitted by mutation resolvers. Also referred to in this document as &quot;<em>Events</em>&quot;. Events are defined by a <code>name: string</code> and a <code>payload: any</code>. These events, once emitted, are given to reducer functions which then update the state accordingly.</li>
+<li><em>Core Events</em>: Default events available to all mutations. Some examples: <code>PROGRESS_UPDATE</code>, <code>TRANSACTION_CREATED</code>, <code>TRANSACTION_COMPLETED</code>.</li>
+<li><em>Extended Events</em>: Events the mutation developer defines. See examples below.</li>
+<li><em>State Reducers</em>: A collection of state reducer functions.</li>
+<li><em>State Reducer</em>: Reducers are responsible for translating events into state updates. They take the form of a function that has the inputs [event, current state], and returns the new state post-event. Also referred to in this document as &quot;<em>Reducer(s)</em>&quot;.</li>
+<li><em>Core Reducers</em>: Default reducers that handle the processing of the core events.</li>
+<li><em>Extended Reducers</em>: Reducers the mutation developer defines. These reducers can be defined for any event, core or extended. The core &amp; extended reducers are run one after another if both are defined for a given core event. See examples below.</li>
+<li><em>State Updater</em>: The state updater object is used by the resolvers to dispatch events. It's passed to the resolvers through the mutation context like so: <code>context.graph.state</code>.</li>
+<li><em>State Builder</em>: An object responsible for (1) initializing the state with initial values and (2) defining reducers for events.</li>
+<li><em>Core State Builder</em>: A state builder that's defined by default. It's responsible for initializing the core state properties, and processing the core events with its reducers.</li>
+<li><em>Extended State Builder</em>: A state builder defined by the mutation developer. It's responsible for initializing the extended state properties, and processing the extended events with its reducers.</li>
+<li><em>Mutations Config</em>: Collection of config properties required by the mutation resolvers. Also referred to in this document as &quot;<em>Config</em>&quot;. All resolvers share the same config. It's passed to the resolver through the mutation context like so: <code>context.graph.config</code>.</li>
+<li><em>Config Property</em>: A single property within the config (ex: ipfs, ethereum, etc).</li>
+<li><em>Config Generator</em>: A function that takes a config argument, and returns a config property. For example, &quot;localhost:5001&quot; as a config argument gets turned into a new IPFS client by the config generator.</li>
+<li><em>Config Argument</em>: An initialization argument that's passed into the config generator function. This config argument is provided by the dApp developer.</li>
+<li><em>Optimistic Response</em>: A response given to the dApp that predicts what the outcome of the mutation's execution will be. If it is incorrect, it will be overwritten with the actual result.</li>
+</ul>
+<h2><a class="header" href="#detailed-design" id="detailed-design">Detailed Design</a></h2>
+<p>The sections below illustrate how a developer would add mutations to an existing subgraph, and then add those mutations to a dApp.</p>
+<h3><a class="header" href="#mutations-manifest" id="mutations-manifest">Mutations Manifest</a></h3>
+<p>The subgraph manifest (<code>subgraph.yaml</code>) now has an extra property named <code>mutations</code> which is the mutations manifest.</p>
+<p><code>subgraph.yaml</code></p>
+<pre><code class="language-yaml">specVersion: ...
+...
+mutations:
+  repository: https://npmjs.com/package/...
+  schema:
+    file: ./mutations/schema.graphql
+  resolvers:
+    apiVersion: 0.0.1
+    kind: javascript/es5
+    file: ./mutations/index.js
+    types: ./mutations/index.d.ts
+dataSources: ...
+...
+</code></pre>
+<p>Alternatively, the mutation manifest can be external like so:<br />
+<code>subgraph.yaml</code></p>
+<pre><code class="language-yaml">specVersion: ...
+...
+mutations:
+  file: ./mutations/mutations.yaml
+dataSources: ...
+...
+</code></pre>
+<p><code>mutations/mutations.yaml</code></p>
+<pre><code class="language-yaml">specVersion: ...
+repository: https://npmjs.com/package/...
+schema:
+  file: ./schema.graphql
+resolvers:
+  apiVersion: 0.0.1
+  kind: javascript/es5
+  file: ./index.js
+  types: ./index.d.ts
+</code></pre>
+<p>NOTE: <code>resolvers.types</code> is required. More on this below.</p>
+<h3><a class="header" href="#mutations-schema" id="mutations-schema">Mutations Schema</a></h3>
+<p>The mutations schema defines all of the mutations in the subgraph. The mutations schema builds on the subgraph schema, allowing the use of types from the subgraph schema, as well as defining new types that are used only in the context of mutations. For example, starting from a base subgraph schema:<br />
+<code>schema.graphql</code></p>
+<pre><code class="language-graphql">type MyEntity @entity {
+  id: ID!
+  name: String!
+  value: BigInt!
+}
+</code></pre>
+<p>Developers can define mutations that reference these subgraph schema types. Additionally new <code>input</code> and <code>interface</code> types can be defined for the mutations to use:<br />
+<code>mutations/schema.graphql</code></p>
+<pre><code class="language-graphql">input MyEntityOptions {
+  name: String!
+  value: BigInt!
+}
+
+interface NewNameSet {
+  oldName: String!
+  newName: String!
+}
+
+type Mutation {
+  createEntity(
+    options: MyEntityOptions!
+  ): MyEntity!
+
+  setEntityName(
+    entity: MyEntity!
+    name: String!
+  ): NewNameSet!
+}
+</code></pre>
+<p><code>graph-cli</code> handles the parsing and validating of these two schemas. It verifies that the mutations schema defines a <code>type Mutation</code> and that all of the mutations within it are defined in the resolvers module (see next section).</p>
+<h3><a class="header" href="#mutation-resolvers" id="mutation-resolvers">Mutation Resolvers</a></h3>
+<p>Each mutation within the schema must have a corresponding resolver function defined. Resolvers will be invoked by whatever engine executes the mutation queries (ex: Apollo Client). They are executed locally within the client application.</p>
+<p>Mutation resolvers of kind <code>javascript/es5</code> take the form of an ES5 javascript module. This module is expected to have a default export that contains the following properties:</p>
+<ul>
+<li>
+<p><code>resolvers: MutationResolvers</code> - The mutation resolver functions. The shape of this object must match the shape of the <code>type Mutation</code> defined above. See the example below for demonstration of this. Resolvers have the following prototype, <a href="https://github.com/graphql/graphql-js/blob/9dba58eeb6e28031bec7594b6df34c4fd74459b0/src/type/definition.js#L906">as defined in graphql-js</a>:</p>
+<pre><code class="language-typescript">import { GraphQLFieldResolver } from 'graphql'
+
+interface MutationContext&lt;
+  TConfig extends ConfigGenerators,
+  TState,
+  TEventMap extends EventTypeMap
+&gt; {
+  [prop: string]: any,
+  graph: {
+    config: ConfigProperties&lt;TConfig&gt;,
+    dataSources: DataSources,
+    state: StateUpdater&lt;TState, TEventMap&gt;
+  }
+}
+
+interface MutationResolvers&lt;
+  TConfig extends ConfigGenerators,
+  TState,
+  TEventMap extends EventTypeMap
+&gt; {
+  Mutation: {
+      [field: string]: GraphQLFieldResolver&lt;
+        any,
+        MutationContext&lt;TConfig, TState, TEventMap&gt;
+      &gt;
+  }
+}
+</code></pre>
+</li>
+<li>
+<p><code>config: ConfigGenerators</code> - A collection of config generators. The config object is made up of properties, that can be nested, but all terminate in the form of a function with the prototype:</p>
+<pre><code class="language-typescript">type ConfigGenerator&lt;TArg, TRet&gt; = (arg: TArg) =&gt; TRet
+
+interface ConfigGenerators {
+  [prop: string]: ConfigGenerator&lt;any, any&gt; | ConfigGenerators
+}
+</code></pre>
+<p>See the example below for a demonstration of this.</p>
+</li>
+<li>
+<p><code>stateBuilder: StateBuilder</code> (optional) - A state builder interface responsible for (1) initializing extended state properties and (2) reducing extended state events. State builders implement the following interface:</p>
+<pre><code class="language-typescript">type MutationState&lt;TState&gt; = CoreState &amp; TState
+type MutationEvents&lt;TEventMap&gt; = CoreEvents &amp; TEventMap
+
+interface StateBuilder&lt;TState, TEventMap extends EventTypeMap&gt; {
+  getInitialState(uuid: string): TState,
+  // Event Specific Reducers
+  reducers?: {
+    [TEvent in keyof MutationEvents&lt;TEventMap&gt;]?: (
+      state: MutationState&lt;TState&gt;,
+      payload: InferEventPayload&lt;TEvent, TEventMap&gt;
+    ) =&gt; OptionalAsync&lt;Partial&lt;MutationState&lt;TState&gt;&gt;&gt;
+  },
+  // Catch-All Reducer
+  reducer?: (
+    state: MutationState&lt;TState&gt;,
+    event: Event
+  ) =&gt; OptionalAsync&lt;Partial&lt;MutationState&lt;TState&gt;&gt;&gt;
+}
+
+interface EventPayload { }
+
+interface Event {
+  name: string
+  payload: EventPayload
+}
+
+interface EventTypeMap {
+  [name: string]: EventPayload
+}
+
+// Optionally support async functions
+type OptionalAsync&lt;T&gt; = Promise&lt;T&gt; | T
+
+// Infer the payload type from the event name, given an EventTypeMap
+type InferEventPayload&lt;
+  TEvent extends keyof TEvents,
+  TEvents extends EventTypeMap
+&gt; = TEvent extends keyof TEvents ? TEvents[TEvent] : any
+</code></pre>
+<p>See the example below for a demonstration of this.</p>
+</li>
+</ul>
+<p>For example:<br />
+<code>mutations/index.js</code></p>
+<pre><code class="language-typescript">import {
+  Event,
+  EventPayload,
+  MutationContext,
+  MutationResolvers,
+  MutationState,
+  StateBuilder,
+  ProgressUpdateEvent
+} from &quot;@graphprotocol/mutations&quot;
+
+import gql from &quot;graphql-tag&quot;
+import { ethers } from &quot;ethers&quot;
+import {
+  AsyncSendable,
+  Web3Provider
+} from &quot;ethers/providers&quot;
+import IPFS from &quot;ipfs&quot;
+
+// Typesafe Context
+type Context = MutationContext&lt;Config, State, EventMap&gt;
+
+/// Mutation Resolvers
+const resolvers: MutationResolvers&lt;Config, State, EventMap&gt; = {
+  Mutation: {
+    async createEntity (source: any, args: any, context: Context) {
+      // Extract mutation arguments
+      const { name, value } = args.options
+
+      // Use config properties created by the
+      // config generator functions
+      const { ethereum, ipfs } = context.graph.config
+
+      // Create ethereum transactions...
+      // Fetch &amp; upload to ipfs...
+
+      // Dispatch a state event through the state updater
+      const { state } = context.graph
+      await state.dispatch(&quot;PROGRESS_UPDATE&quot;, { progress: 0.5 })
+
+      // Dispatch a custom extended event
+      await state.dispatch(&quot;MY_EVENT&quot;, { myValue: &quot;...&quot; })
+
+      // Get a copy of the current state
+      const currentState = state.current
+
+      // Send another query using the same client.
+      // This query would result in the graph-node's
+      // entity store being fetched from. You could also
+      // execute another mutation here if desired.
+      const { client } = context
+      await client.query({
+        query: gql`
+          myEntity (id: &quot;${id}&quot;) {
+            id
+            name
+            value
+          }
+        }`
+      })
+
+      ...
+    },
+    async setEntityName (source: any, args: any, context: Context) {
+      ...
+    }
+  }
+}
+
+/// Config Generators
+type Config = typeof config
+
+const config = {
+  // These function arguments are passed in by the dApp
+  ethereum: (arg: AsyncSendable): Web3Provider =&gt; {
+    return new ethers.providers.Web3Provider(arg)
+  },
+  ipfs: (arg: string): IPFS =&gt; {
+    return new IPFS(arg)
+  },
+  // Example of a custom config property
+  property: {
+    // Generators can be nested
+    a: (arg: string) =&gt; { },
+    b: (arg: string) =&gt; { }
+  }
+}
+
+/// (optional) Extended State, Events, and State Builder
+
+// Extended State
+interface State {
+  myValue: string
+}
+
+// Extended Events
+interface MyEvent extends EventPayload {
+  myValue: string
+}
+
+type EventMap = {
+  &quot;MY_EVENT&quot;: MyEvent
+}
+
+// Extended State Builder
+const stateBuilder: StateBuilder&lt;State, EventMap&gt; = {
+  getInitialState(): State {
+    return {
+      myValue: &quot;&quot;
+    }
+  },
+  reducers: {
+    &quot;MY_EVENT&quot;: async (state: MutationState&lt;State&gt;, payload: MyEvent) =&gt; {
+      return {
+        myValue: payload.myValue
+      }
+    },
+    &quot;PROGRESS_UPDATE&quot;: (state: MutationState&lt;State&gt;, payload: ProgressUpdateEvent) =&gt; {
+      // Do something custom...
+    }
+  },
+  // Catch-all reducer...
+  reducer: (state: MutationState&lt;State&gt;, event: Event) =&gt; {
+    switch (event.name) {
+      case &quot;TRANSACTION_CREATED&quot;:
+        // Do something custom...
+        break
+    }
+  }
+}
+
+export default {
+  resolvers,
+  config,
+  stateBuilder
+}
+
+// Required Types
+export {
+  Config,
+  State,
+  EventMap,
+  MyEvent
+}
+</code></pre>
+<p>NOTE: It's expected that the mutations manifest has a <code>resolvers.types</code> file defined. The following types must be defined in the .d.ts type definition file:</p>
+<ul>
+<li><code>Config</code></li>
+<li><code>State</code></li>
+<li><code>EventMap</code></li>
+<li>Any <code>EventPayload</code> interfaces defined within the <code>EventMap</code></li>
+</ul>
+<h3><a class="header" href="#dapp-integration" id="dapp-integration">dApp Integration</a></h3>
+<p>In addition to the resolvers module defined above, the dApp has access to a run-time API to help with the instantiation and execution of mutations. This package is called <code>@graphprotocol/mutations</code> and is defined like so:</p>
+<ul>
+<li>
+<p><code>createMutations</code> - Create a mutations interface which enables the user to <code>execute</code> a mutation query and <code>configure</code> the mutation module.</p>
+<pre><code class="language-typescript">interface CreateMutationsOptions&lt;
+  TConfig extends ConfigGenerators,
+  TState,
+  TEventMap extends EventTypeMap
+&gt; {
+  mutations: MutationsModule&lt;TConfig, TState, TEventMap&gt;,
+  subgraph: string,
+  node: string,
+  config: ConfigArguments&lt;TConfig&gt;
+  mutationExecutor?: MutationExecutor&lt;TConfig, TState, TEventMap&gt;
+}
+
+interface Mutations&lt;
+  TConfig extends ConfigGenerators,
+  TState,
+  TEventMap extends EventTypeMap
+&gt; {
+  execute: (query: MutationQuery&lt;TConfig, TState, TEventMap&gt;) =&gt; Promise&lt;MutationResult&gt;
+  configure: (config: ConfigArguments&lt;TConfig&gt;) =&gt; void
+}
+
+const createMutations = &lt;
+  TConfig extends ConfigGenerators,
+  TState = CoreState,
+  TEventMap extends EventTypeMap = { },
+&gt;(
+  options: CreateMutationsOptions&lt;TConfig, TState, TEventMap&gt;
+): Mutations&lt;TConfig, TState, TEventMap&gt; =&gt; { ... }
+</code></pre>
+</li>
+<li>
+<p><code>createMutationsLink</code> - wrap the mutations created above in an ApolloLink.</p>
+<pre><code class="language-typescript">const createMutationsLink = &lt;
+  TConfig extends ConfigGenerators,
+  TState,
+  TEventMap extends EventTypeMap,
+&gt; (
+  { mutations }: { mutations: Mutations&lt;TConfig, TState, TEventMap&gt; }
+): ApolloLink =&gt; { ... }
+</code></pre>
+</li>
+</ul>
+<p>For applications using Apollo and React, a run-time API is available which mimics commonly used hooks and components for executing mutations, with the addition of having the mutation state available to the caller. This package is called <code>@graphprotocol/mutations-apollo-react</code> and is defined like so:</p>
+<ul>
+<li>
+<p><code>useMutation</code> - see https://www.apollographql.com/docs/react/data/mutations/#executing-a-mutation</p>
+<pre><code class="language-typescript">import { DocumentNode } from &quot;graphql&quot;
+import {
+  ExecutionResult,
+  MutationFunctionOptions,
+  MutationResult,
+  OperationVariables
+} from &quot;@apollo/react-common&quot;
+import { MutationHookOptions } from &quot;@apollo/react-hooks&quot;
+import { CoreState } from &quot;@graphprotocol/mutations&quot;
+
+type MutationStates&lt;TState&gt; = {
+  [mutation: string]: MutationState&lt;TState&gt;
+}
+
+interface MutationResultWithState&lt;TState, TData = any&gt; extends MutationResult&lt;TData&gt; {
+  state: MutationStates&lt;TState&gt;
+}
+
+type MutationTupleWithState&lt;TState, TData, TVariables&gt; = [
+  (
+    options?: MutationFunctionOptions&lt;TData, TVariables&gt;
+  ) =&gt; Promise&lt;ExecutionResult&lt;TData&gt;&gt;,
+  MutationResultWithState&lt;TState, TData&gt;
+]
+
+const useMutation = &lt;
+  TState = CoreState,
+  TData = any,
+  TVariables = OperationVariables
+&gt;(
+  mutation: DocumentNode,
+  mutationOptions: MutationHookOptions&lt;TData, TVariables&gt;
+): MutationTupleWithState&lt;TState, TData, TVariables&gt; =&gt; { ... }
+</code></pre>
+</li>
+<li>
+<p><code>Mutation</code> - see https://www.howtographql.com/react-apollo/3-mutations-creating-links/</p>
+<pre><code class="language-typescript">interface MutationComponentOptionsWithState&lt;
+  TState,
+  TData,
+  TVariables
+&gt; extends BaseMutationOptions&lt;TData, TVariables&gt; {
+  mutation: DocumentNode
+  children: (
+    mutateFunction: MutationFunction&lt;TData, TVariables&gt;,
+    result: MutationResultWithState&lt;TState, TData&gt;
+  ) =&gt; JSX.Element | null
+}
+
+const Mutation = &lt;
+  TState = CoreState,
+  TData = any,
+  TVariables = OperationVariables
+&gt;(
+  props: MutationComponentOptionsWithState&lt;TState, TData, TVariables&gt;
+): JSX.Element | null =&gt; { ... }
+</code></pre>
+</li>
+</ul>
+<p>For example:<br />
+<code>dApp/src/App.tsx</code></p>
+<pre><code class="language-typescript">import {
+  createMutations,
+  createMutationsLink
+} from &quot;@graphprotocol/mutations&quot;
+import {
+  Mutation,
+  useMutation
+} from &quot;@graphprotocol/mutations-apollo-react&quot;
+import myMutations, { State } from &quot;mutations-js-module&quot;
+import { createHttpLink } from &quot;apollo-link-http&quot;
+
+const mutations = createMutations({
+  mutations: myMutations,
+  // Config args, which will be passed to the generators
+  config: {
+    // Config args can take the form of functions to allow
+    // for dynamic fetching behavior
+    ethereum: async (): AsyncSendable =&gt; {
+      const { ethereum } = (window as any)
+      await ethereum.enable()
+      return ethereum
+    },
+    ipfs: &quot;http://localhost:5001&quot;,
+    property: {
+      a: &quot;...&quot;,
+      b: &quot;...&quot;
+    }
+  },
+  subgraph: &quot;my-subgraph&quot;,
+  node: &quot;http://localhost:8080&quot;
+})
+
+// Create Apollo links to handle queries and mutation queries
+const mutationLink = createMutationLink({ mutations })
+const queryLink = createHttpLink({
+  uri: &quot;http://localhost:8080/subgraphs/name/my-subgraph&quot;
+})
+
+// Create a root ApolloLink which splits queries between
+// the two different operation links (query &amp; mutation)
+const link = split(
+  ({ query }) =&gt; {
+    const node = getMainDefinition(query)
+    return node.kind === &quot;OperationDefinition&quot; &amp;&amp;
+           node.operation === &quot;mutation&quot;
+  },
+  mutationLink,
+  queryLink
+)
+
+// Create an Apollo Client
+const client = new ApolloClient({
+  link,
+  cache: new InMemoryCache()
+})
+
+const CREATE_ENTITY = gql`
+  mutation createEntity($options: MyEntityOptions) {
+    createEntity(options: $options) {
+      id
+      name
+      value
+    }
+  }
+`
+
+// exec: execution function for the mutation query
+// loading: https://www.apollographql.com/docs/react/data/mutations/#tracking-mutation-status
+// state: mutation state instance
+const [exec, { loading, state }] = useMutation&lt;State&gt;(
+  CREATE_ENTITY,
+  {
+    client,
+    variables: {
+      options: { name: &quot;...&quot;, value: 5 }
+    }
+  }
+)
+
+// Access the mutation's state like so:
+state.createEntity.myValue
+
+// Optimistic responses can be used to update
+// the UI before the execution has finished.
+// More information can be found here:
+// https://www.apollographql.com/docs/react/performance/optimistic-ui/
+const [exec, { loading, state }] = useMutation(
+  CREATE_ENTITY,
+  {
+    optimisticResponse: {
+      __typename: &quot;Mutation&quot;,
+      createEntity: {
+        __typename: &quot;MyEntity&quot;,
+        name: &quot;...&quot;,
+        value: 5,
+        // NOTE: ID must be known so the
+        // final response can be correlated.
+        // Please refer to Apollo's docs.
+        id: &quot;id&quot;
+      }
+    },
+    variables: {
+      options: { name: &quot;...&quot;, value: 5 }
+    }
+  }
+)
+</code></pre>
+<pre><code class="language-html">// Use the Mutation JSX Component
+&lt;Mutation
+  mutation={CREATE_ENTITY}
+  variables={{options: { name: &quot;...&quot;, value: 5 }}}
+&gt;
+  {(exec, { loading, state }) =&gt; (
+    &lt;button onClick={exec} /&gt;
+  )}
+&lt;/Mutation&gt;
+</code></pre>
+<h2><a class="header" href="#compatibility" id="compatibility">Compatibility</a></h2>
+<p>No breaking changes will be introduced, as mutations are an optional add-on to a subgraph.</p>
+<h2><a class="header" href="#drawbacks-and-risks" id="drawbacks-and-risks">Drawbacks and Risks</a></h2>
+<p>Nothing apparent at the moment.</p>
+<h2><a class="header" href="#alternatives" id="alternatives">Alternatives</a></h2>
+<p>The existing alternative that protocol developers are creating for dApp developers has been described above.</p>
+<h2><a class="header" href="#open-questions" id="open-questions">Open Questions</a></h2>
+<ul>
+<li>
+<p><strong>How can mutations pickup where they left off in the event of an abrupt application shutdown?</strong>
+Since mutations can contain many different steps internally, it would be ideal to be able to support continuing resolver execution in the event the dApp abruptly shuts down.</p>
+</li>
+<li>
+<p><strong>How can dApps understand what steps a given mutation will take during the course of its execution?</strong>
+dApps may want to present to the user friendly progress updates, letting them know a given mutation is 3/4ths of the way through its execution (for example) and a high level description of each step. I view this as closely tied to the previous open question above, as we could support continuing resolver executions if we know what step it's currently undergoing. A potential implementation could include adding a <code>steps: Step[]</code> property to the core state, where <code>Step</code> looks similar to:</p>
+<pre><code class="language-typescript">interface Step {
+  id: string
+  title: string
+  description: string
+  status: 'pending' | 'processing' | 'error' | 'finished'
+  current: boolean
+  error?: Error
+  data: any
+}
+</code></pre>
+<p>This, plus a few core events &amp; reducers, would be all we need to render UIs like the ones seen here: https://ant.design/components/steps/</p>
+</li>
+<li>
+<p><strong>Should dApps be able to define event handlers for mutation events?</strong>
+dApps may want to implement their own handlers for specific events emitted from mutations. These handlers would be different from the reducers, as we wouldn't want them to be able to modify the state. Instead they could store their own state elsewhere within the dApp based on the events.</p>
+</li>
+<li>
+<p><strong>Should the Graph Node's schema introspection endpoint respond with the &quot;full&quot; schema, including the mutations' schema?</strong>
+Developers could fetch the &quot;full&quot; schema by looking up the subgraph's manifest, read the <code>mutations.schema.file</code> hash value, and fetching the full schema from IPFS. Should the graph-node support querying this full schema directly from the graph-node itself through the introspection endpoint?</p>
+</li>
+<li>
+<p><strong>Will server side execution ever be a reality?</strong>
+I have not thought of a trustless solution to this, am curious if anyone has any ideas of how we could make this possible.</p>
+</li>
+<li>
+<p><strong>Will The Graph Explorer support mutations?</strong>
+We could have the explorer client-side application dynamically fetch and include mutation resolver modules. Configuring the resolvers module dynamically is problematic though. Maybe there are a few known config properties that the explorer client supports, and for all others it allows the user to input config arguments (if they're base types).</p>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../rfcs/0002-ethereum-tracing-cache.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../rfcs/0004-fulltext-search.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../rfcs/0002-ethereum-tracing-cache.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../rfcs/0004-fulltext-search.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+        
+        
+        <script type="text/javascript">
+            window.playpen_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        <script type="text/javascript" src="../assets/mermaid.min.js"></script>
+        
+        <script type="text/javascript" src="../assets/mermaid-init.js"></script>
+        
+
+        
+
+    </body>
+</html>

@@ -1,0 +1,16 @@
+:root {
+    --sidebar-width: 35rem;
+}
+
+dl {
+    background: #f1f1f1;
+    padding: 2rem;
+}
+
+dt {
+    font-weight: 600;
+}
+
+.section, ol.section {
+    opacity: 1.0;
+}

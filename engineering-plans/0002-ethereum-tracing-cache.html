@@ -1,0 +1,389 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>PLAN-0002: Ethereum Tracing Cache - Graph Protocol RFCs and Engineering Plans</title>
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../assets/mermaid.css">
+        
+        <link rel="stylesheet" href="../assets/custom.css">
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../rfcs/index.html"><strong aria-hidden="true">2.</strong> RFCs</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rfcs/approved.html"><strong aria-hidden="true">2.1.</strong> Approved RFCs</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../rfcs/0001-subgraph-composition.html"><strong aria-hidden="true">2.1.1.</strong> RFC-0001: Subgraph Composition</a></li><li class="chapter-item expanded "><a href="../rfcs/0002-ethereum-tracing-cache.html"><strong aria-hidden="true">2.1.2.</strong> RFC-0002: Ethereum Tracing Cache</a></li><li class="chapter-item expanded "><a href="../rfcs/0003-mutations.html"><strong aria-hidden="true">2.1.3.</strong> RFC-0003: Mutations</a></li><li class="chapter-item expanded "><a href="../rfcs/0004-fulltext-search.html"><strong aria-hidden="true">2.1.4.</strong> RFC-0004: Fulltext Search</a></li></ol></li><li class="chapter-item expanded "><a href="../rfcs/obsolete.html"><strong aria-hidden="true">2.2.</strong> Obsolete RFCs</a></li><li class="chapter-item expanded "><a href="../rfcs/rejected.html"><strong aria-hidden="true">2.3.</strong> Rejected RFCs</a></li></ol></li><li class="chapter-item expanded "><a href="../engineering-plans/index.html"><strong aria-hidden="true">3.</strong> Engineering Plans</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../engineering-plans/approved.html"><strong aria-hidden="true">3.1.</strong> Approved Plans</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../engineering-plans/0001-graphql-query-prefetching.html"><strong aria-hidden="true">3.1.1.</strong> PLAN-0001: GraphQL Query Prefetching</a></li><li class="chapter-item expanded "><a href="../engineering-plans/0002-ethereum-tracing-cache.html" class="active"><strong aria-hidden="true">3.1.2.</strong> PLAN-0002: Ethereum Tracing Cache</a></li><li class="chapter-item expanded "><a href="../engineering-plans/0003-remove-jsonb-storage.html"><strong aria-hidden="true">3.1.3.</strong> PLAN-0003: Remove JSONB Storage</a></li></ol></li><li class="chapter-item expanded "><a href="../engineering-plans/obsolete.html"><strong aria-hidden="true">3.2.</strong> Obsolete Plans</a></li><li class="chapter-item expanded "><a href="../engineering-plans/rejected.html"><strong aria-hidden="true">3.3.</strong> Rejected Plans</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Graph Protocol RFCs and Engineering Plans</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#plan-0002-ethereum-tracing-cache" id="plan-0002-ethereum-tracing-cache">PLAN-0002: Ethereum Tracing Cache</a></h1>
+<dl>
+  <dt>Author</dt>
+  <dd>Zachary Burns</dd>
+<dt>Implements</dt>
+  <dd><a href="../rfcs/0002-ethereum-tracing-cache.html">RFC-0002 Ethereum Tracing Cache</a></dd>
+<dt>Engineering Plan pull request</dt>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/9">https://github.com/graphprotocol/rfcs/pull/9</a></dd>
+<dt>Date of submission</dt>
+  <dd>2019-12-20</dd>
+<dt>Date of approval</dt>
+  <dd>2020-01-07</dd>
+<dt>Approved by</dt>
+  <dd>Jannis Pohlmann, Leo Yvens</dd>
+</dl>
+<h2><a class="header" href="#summary" id="summary">Summary</a></h2>
+<p>Implements RFC-0002: Ethereum Tracing Cache</p>
+<h2><a class="header" href="#implementation" id="implementation">Implementation</a></h2>
+<p>These changes happen within or near <code>ethereum_adapter.rs</code>, <code>store.rs</code> and <code>db_schema.rs</code>.</p>
+<h3><a class="header" href="#limitations" id="limitations">Limitations</a></h3>
+<p>The problem of reorg turns out to be a particularly tricky one for the cache, mostly due to ranges of blocks being requested rather than individual hashes. To sidestep this problem, only blocks that are older than the reorg threshold will be eligible for caching.</p>
+<p>Additionally, there are some subgraphs which may require traces from all or a substantial number of blocks and don't make effective use of filtering. In particular, subgraphs which specify a call handler without a contract address fall into this category. In order to prevent the cache from bloating, any use of Ethereum traces which does not filter on a contract address will bypass the cache.</p>
+<h3><a class="header" href="#ethereumtracecache" id="ethereumtracecache">EthereumTraceCache</a></h3>
+<p>The implementation introduces the following trait, which is implemented primarily by <code>Store</code>.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>use std::ops::RangeInclusive;
+struct TracesInRange {
+    range: RangeInclusive&lt;u64&gt;,
+    traces: Vec&lt;Trace&gt;,
+}
+
+pub trait EthereumTraceCache: Send + Sync + 'static {
+    /// Attempts to retrieve traces from the cache. Returns ranges which were retrieved.
+    /// The results may not cover the entire range of blocks. It is up to the caller to decide
+    /// what to do with ranges of blocks that are not cached.
+    fn traces_for_blocks(contract_address: Option&lt;H160&gt;, blocks: RangeInclusive&lt;u64&gt;
+        ) -&gt; Box&lt;dyn Future&lt;Output=Result&lt;Vec&lt;TracesInRange&gt;, Error&gt;&gt;&gt;;
+    fn add(contract_address: Option&lt;H160&gt;, traces: Vec&lt;TracesInRange&gt;);
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h4><a class="header" href="#block-schema" id="block-schema">Block schema</a></h4>
+<p>Each cached block will exist as its own row in the database in an <code>eth_traces_cache</code> table.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>eth_traces_cache(id) {
+  id -&gt; Integer,
+  network -&gt; Text,
+  block_number: Integer,
+  contract_address: Bytea,
+  traces -&gt; Jsonb,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>A multi-column index will be added on network, block_number, and contract_address.</p>
+<p>It can be noted that in the <code>eth_traces_cache</code> table, there is a very low cardinality for the value of the network row. It is inefficient for example to store the string <code>mainnet</code> millions of times and consider this value when querying. A data oriented approach would be to partition these tables on the value of the network. It is expected that hash partitioning available in Postgres 11 would be useful here, but the necessary dependencies won't be ready in time for this RFC. This may be revisited in the future.</p>
+<h4><a class="header" href="#valid-cache-range" id="valid-cache-range">Valid Cache Range</a></h4>
+<p>Because the absence of trace data for a block is a valid cache result, the database must maintain a data structure indicating which ranges of the cache are valid in an <code>eth_traces_meta</code> table. This table also enables eventually implementing cleaning out old data.</p>
+<p>This is the schema for that structure:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>id -&gt; Integer,
+network -&gt; Text,
+start_block -&gt; Integer,
+end_block -&gt; Integer,
+contract_address -&gt; Nullable&lt;Bytea&gt;,
+accessed_at -&gt; Date,
+<span class="boring">}
+</span></code></pre></pre>
+<p>When inserting data into the cache, removing data from the cache, or reading the cache, a serialized transaction must be used to preserve atomicity between the valid cache range structure and the cached blocks. Care must be taken to not rely on any data read outside of the serialized transaction, and for the extent of the serialized transaction to not span any async contexts that rely on any <code>Future</code> outside of the database itself. The definition of the <code>EthereumTraceCache</code> trait is designed to uphold these guarantees.</p>
+<p>In order to preserve space in the database, whenever the valid cache range is added it will be added such that adjacent and overlapping ranges are merged into it.</p>
+<h3><a class="header" href="#cache-usage" id="cache-usage">Cache usage</a></h3>
+<p>The primary user of the cache is <code>EtheriumAdapter&lt;T&gt;</code> in the <code>traces</code> function. </p>
+<p>The correct algorithm for retrieving traces from the cache is surprisingly nuanced. The complication arises from the interaction between multiple subgraphs which may require a subset of overlapping contract addresses. The rate at which indexing proceeds of these subgraphs can cause different ranges of the cache to be valid for a contract address in a single query.</p>
+<p>We want to minimize the cost of external requests for trace data. It is likely that it is better to...</p>
+<ul>
+<li>Make fewer requests</li>
+<li>Not ask for trace data that is already cached</li>
+<li>Ask for trace data for multiple contract addresses within the same block when possible.</li>
+</ul>
+<p>There is one flow of data which upholds these invariants. In doing so it makes a tradeoff of increasing latency for the execution of a specific subgraph, but increases throughput of the whole system.</p>
+<p>Within this graph:</p>
+<ul>
+<li>Edges which are labelled refer to some subset of the output data.</li>
+<li>Edges which are not labelled refer to the entire set of the output data.</li>
+<li>Each node executes once for each contiguous range of blocks. That is, it merges all incoming data before executing, and executes the minimum possible times.</li>
+<li>The example given is just for 2 addresses. The actual code must work on sets of addresses.</li>
+</ul>
+<pre class="mermaid">graph LR;
+   A[Block Range for Contract A & B]
+   A --> |Above Reorg Threshold| E
+   D[Get Cache A]
+   A --> |Below Reorg Threshold A| D
+   A --> |Below Reorg Threshold B| H
+   E[Ethereum A & B]
+   F[Ethereum A]
+   G[Ethereum B]
+   H[Get Cache B]
+   D --> |Found| M
+   H --> |Found| M
+   M[Result]
+   D --> |Missing| N
+   H --> |Missing| N
+   N[Overlap]
+   N --> |A & B| E
+   N --> |A| F
+   N --> |B| G
+   E --> M
+   K[Set Cache A]
+   L[Set Cache B]
+   E --> |B Below Reorg Threshold| L
+   E --> |A Below Reorg Threshold| K
+   F --> K
+   G --> L
+   F --> M
+   G --> M
+</pre>
+<p>This construction is designed to make the fewest number of the most efficient calls possible. It is not as complicated as it looks. The actual construction can be expressed as sequential steps with a set of filters preceding each step.</p>
+<h3><a class="header" href="#useful-dependencies" id="useful-dependencies">Useful dependencies</a></h3>
+<p>The feature deals a lot with ranges and sets. Operations like sum, subtract, merge, and find overlapping are used frequently. <a href="https://crates.io/crates/nested_intervals">nested_intervals</a> is a crate which provides some of these operations.</p>
+<h2><a class="header" href="#tests" id="tests">Tests</a></h2>
+<h3><a class="header" href="#benchmark" id="benchmark">Benchmark</a></h3>
+<p>A temporary benchmark will be added for indexing a simple subgraph which uses call handlers. The benchmark will be run in these scenarios:</p>
+<ul>
+<li>Sync before changes</li>
+<li>Re-sync before changes </li>
+<li>Sync after changes</li>
+<li>Re-sync after changes</li>
+</ul>
+<h3><a class="header" href="#ranges" id="ranges">Ranges</a></h3>
+<p>Due to the complexity of the resource minimizing data workflow, it will be useful to have mocks for the cache and database which record their calls, and check that expected calls are made for tricky data sets.</p>
+<h3><a class="header" href="#database" id="database">Database</a></h3>
+<p>A real database integration test will be added to test the add/remove from cache implementation to verify that it correctly merges blocks, handles concurrency issues, etc.</p>
+<h2><a class="header" href="#migration" id="migration">Migration</a></h2>
+<p>None</p>
+<h2><a class="header" href="#documentation" id="documentation">Documentation</a></h2>
+<p>None, aside from code comments</p>
+<h2><a class="header" href="#implementation-plan" id="implementation-plan">Implementation Plan:</a></h2>
+<p>These estimates inflated to account for the author's lack of experience with Postgres, Ethereum, Futures0.1, and The Graph in general.</p>
+<ul>
+<li>(1) Create benchmarks</li>
+<li>Postgres Cache
+<ul>
+<li>(0.5) Block Cache</li>
+<li>(0.5) Trace Serialization/Deserialization</li>
+<li>(1.0) Ranges Cache</li>
+<li>(0.5) Concurrency/Transactions</li>
+<li>(0.5) Tests against Postgres</li>
+</ul>
+</li>
+<li>Data Flow
+<ul>
+<li>(3) Implementation</li>
+<li>(1) Unit tests</li>
+</ul>
+</li>
+<li>(0.5) Run Benchmarks</li>
+</ul>
+<p>Total: 8</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../engineering-plans/0001-graphql-query-prefetching.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../engineering-plans/0003-remove-jsonb-storage.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../engineering-plans/0001-graphql-query-prefetching.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../engineering-plans/0003-remove-jsonb-storage.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+        
+        
+        <script type="text/javascript">
+            window.playpen_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        <script type="text/javascript" src="../assets/mermaid.min.js"></script>
+        
+        <script type="text/javascript" src="../assets/mermaid-init.js"></script>
+        
+
+        
+
+    </body>
+</html>
