@@ -86,7 +86,7 @@ The structure of the subgraph manifest is already desigend for being extended
 with new types of data sources. An Ethereum data source is currently defined with
 
 ```yaml
-kind: ethereum/contract
+kind: substrate/contract
 name: Gravity
 source:
   chain: mainnet
@@ -308,13 +308,15 @@ struct BlockPointer {
 /// Represents a block in a particular chain. Each chain has its own
 /// implementation of the `Block` trait.
 trait Block: ToAsc {
-    fn number(&self) -> BigInt;
-    fn hash(&self) -> Bytes;
+    fn number(&self) -> BigInt { self.pointer().number }
+    fn hash(&self) -> Bytes { self.pointer().hash }
     fn pointer(&self) -> BlockPointer;
     fn parent_pointer(&self) -> Option<BlockPointer>;
 }
 
 /// Represents a decentralized network like Ethereum, Polkadot or similar.
+/// NOTE: This enum can be added later if we add support for non-blockchain
+/// networks.
 enum Network {
     // Variant for blockchain networks.
     Blockchain(Box<dyn Blockchain>),
@@ -323,9 +325,6 @@ enum Network {
 /// Represents a blockchain supported by the node.
 trait Blockchain {
     type Chain: Chain;
-    type Options;
-
-    fn new(options: Self::Options) -> Self;
     
     // Looks up a chain by name. Fails if the node doesn't support the chain.
     fn chain(&self, name: String) -> Result<Self::Chain, Error>;
@@ -347,16 +346,14 @@ struct BlockByHashOptions {
     hash: Bytes
 }
 
-struct BlockStreamOptions<'a> {
+trait BlockStreamOptions {
     logger: Logger,
     data_sources: Vec<&'a DataSource>,
 }
 
-/// Represents a network (essentially an instance of a `Chain`).
+/// Represents a chain (essentially an instance of a Blockchain).
 trait Chain {
     type Block: Block;
-    type ChainIndexer: ChainIndexer<Self::Block>;
-    type BlockStream: BlockStream<Self::Block>;
 
     // Methods common to all chains. These are needed by the chain indexer
     // and block stream, potentially also by time-travel queries.
@@ -364,48 +361,9 @@ trait Chain {
     async fn block_by_number(&self, options: BlockByNumberOptions) -> Result<Self::Block, Error>;
     async fn block_by_hash(&self, options: BlockByHashOptions) -> Result<Self::Block, Error>;
 
-    // Indexes chain data hand handles reorgs.
-    async fn indexer(&self) -> Result<Self::ChainIndexer, Error>;
-    
-    // Provides a block/trigger stream for given options (including
-    // data sources, to generate filters).
-    async fn block_stream<'a>(&self, options: BlockStreamOptions<'a>) -> Result<Self::BlockStream, Error>;
+    // Index a subgraph, leaving the _how_ to the chain implementation.
+    async fn index_subgraph(&self, subgraph: SubgraphInstance);
 }
-
-/// Events emitted by a chain indexer.
-pub enum ChainIndexerEvent<T: Block> {
-    Revert {
-        from: BlockPointer,
-        to: BlockPointer,
-    },
-    AddBlock(Box<T>),
-}
-
-/// Common trait for all chain indexers.
-trait ChainIndexer<T: Block>: Stream<ChainIndexerEvent<T>> {}
-
-/// Triggers emitted by a block stream. Triggers can be passed to 
-/// AssemblyScript and implement a canonical ordering to ensure
-/// they are not processed out of order.
-trait ChainTrigger: ToAsc + Ord {
-    fn matches_data_source(&self, data_source: &DataSource) -> bool;
-    fn matches_handler(&self, handler: &DataSourceHandler) -> bool;
-}
-
-/// Combination of a block and subgraph-specific triggers for it.
-struct BlockWithTriggers<T: Block> {
-    block: Box<T>,
-    triggers: Vec<dyn NetworkTrigger>,
-}
-
-/// Events emitted by a block stream.
-enum BlockStreamEvent<T: Block> {
-    Revert(BlockPointer),
-    Block(BlockWithTriggers<T>)
-}
-
-/// Common trait for all block streams.
-trait BlockStream<T: Block>: Stream<BlockStreamEvent<T>> {}
 ```
 
 Any blockchain integration has to implement the above traits, except for
