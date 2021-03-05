@@ -5,7 +5,7 @@
   <dd>Jannis Pohlmann and Leonardo Yvens</dd>
 
   <dt>RFC pull request</dt>
-  <dd><a href="https://github.com/graphprotocol/rfcs/pull/8">https://github.com/graphprotocol/rfcs/pull/21</a></dd>
+  <dd><a href="https://github.com/graphprotocol/rfcs/pull/21">https://github.com/graphprotocol/rfcs/pull/21</a></dd>
 
   <dt>Date of submission</dt>
   <dd>2019-12-20</dd>
