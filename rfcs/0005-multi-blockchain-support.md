@@ -290,7 +290,7 @@ trait BlockStream<C: Blockchain> {
 }
 
 /// Represents a blockchain supported by the node.
-trait Chain {
+trait Blockchain {
     /// The DB schema for the `blocks` table and any custom tables.
     const DB_SCHEMA: &'static str;
 
