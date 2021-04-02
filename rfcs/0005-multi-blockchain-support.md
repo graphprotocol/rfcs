@@ -72,7 +72,7 @@ these chains they want to enable.
 
 ### Subgraph Manifest
 
-The structure of the subgraph manifest is already desigend for being extended
+The structure of the subgraph manifest is already designed for being extended
 with new types of data sources. An Ethereum data source is currently defined with
 
 ```yaml
