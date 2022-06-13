@@ -169,7 +169,7 @@ Technical considerations:
   - The `digest` field can be a lot smaller, the value here is from a POI,
     which we don't need to keep the same properties;
   - It should be calculated in a separate thread/future to the mapping code
-    execution, so it doesn't degrate performance;
+    execution, so it doesn't degrade performance;
 - On the database side
   - As mentioned before, this data should go under the subgraph's namespaced 
     database, aka `sgdX`, just as where the current POI table stands `poi2$`;
@@ -181,7 +181,7 @@ POI, but it could be used by indexers (or us) to compare if the data
 `graph-node` fetched, given a `provider`, `subgraph` and `block` has the same
 result.
 
-We could also add an utility `graphman` command that fetches that specific data
+We could also add a utility `graphman` command that fetches that specific data
 for the `provider`, `subgraph` and `block`. This data could be either be
 compared with other providers in `graph-node` itself, or the task could perhaps
 be delegated to the new `graph-ixi` cross checking tool.
